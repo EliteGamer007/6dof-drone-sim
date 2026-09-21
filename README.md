@@ -113,10 +113,9 @@ aircraft pulls the camera in instead of clipping through it.
 ### Launch and recovery
 
 The drone starts on the roof deck of the response van parked in the staging
-area, and the last objective is to land back on it. The deck is a real
-collision surface with a marked touchdown circle, the ground inside the cordon
-is kept clear of debris, and `Backspace` puts the aircraft back on the deck from
-anywhere.
+area. The deck is a real collision surface with a marked touchdown circle, the
+ground inside the cordon is kept clear of debris, and `Backspace` puts the
+aircraft back on the deck from anywhere.
 
 Editing: open `scenes/main.tscn`. The `Drone` node is `scenes/drone.tscn` (your
 DJI model is its `Airframe` child). The terrain, structures, van and props are
@@ -179,7 +178,9 @@ the operator would otherwise have to ask over the radio.
 
 | | |
 | --- | --- |
-| **Staging area** | The response van you launch from and land back on, inside a barrier cordon, with the ground swept clear of debris for 19 m. |
+| **Staging area** | The response van you launch from, inside a barrier cordon, with the ground swept clear of debris for 19 m. |
+| **The city** | A ruined skyline on three sides, open toward the quay. Six damaged blocks stand behind the staging area and seven more inside the survey area, from barely-touched shells to flattened pancake stacks. |
+| **Rubble field** | Ground debris across the whole site, thickest along the pipe corridor. Three MultiMeshes, so the entire field costs three draw calls and carries no collision. |
 | **Wind mast** | A windsock that points downwind and lifts with the wind speed, so the mast, the HUD readout and the direction the plumes actually drift all agree. |
 | **Casualty collection point** | Canopy, ambulance, and three triage bays painted immediate / delayed / minor. This is where the survivors you tag are taken, which is why the route to it matters. |
 | **Marked access route** | A coned vehicle route from the staging area to the collapse — and the fallen wall panel that blocks it. That blockage is a finding, not scenery: it is the single most useful thing an assessment flight can report. |
@@ -214,6 +215,16 @@ channel has nothing to amplify and the other two sensors have no argument.
 
 A survivor is logged when **you tag them**, not when the detector happens to
 glimpse a warm shape. Put the reticle on them and press A / `X`.
+
+Tagging works on whatever the reticle is pointing at, regardless of what the
+detector thinks. The detector drops its confidence hard when the line of sight
+is obstructed, which is right for the automatic log and wrong for the tag
+button: a survivor visible through a gap in a pipe rack has to be taggable.
+
+The six survivors are instances of `scenes/victim.tscn`, sitting under a
+`Survivors` node in `scenes/main.tscn`, so they can be selected and moved in
+the editor. Each one drops onto whatever solid surface is below it when the
+scene starts, so placing one only means getting the X and Z right.
 
 Every contact carries one de-duplication key, and both routes into the findings
 log — the automatic detector for fires, gas and structures, and the tag button

@@ -47,6 +47,9 @@ const HDRI_DUSK := "res://assets/polyhaven/hdris/industrial_sunset_02_puresky_2k
 const HDRI_NIGHT := "res://assets/polyhaven/hdris/wasteland_clouds_puresky_2k.hdr"
 
 @export var quality: Quality = Quality.MEDIUM
+## Off when scenes/main.tscn supplies its own Survivors node, so the six
+## hand-placed figures are not doubled up by the procedural fallback.
+@export var place_victims := true
 @export var world_seed := 20200804        ## the date of the event being studied
 
 var environment: WorldEnvironment
@@ -629,6 +632,282 @@ func _build_structures() -> void:
 	_build_quay_wall(concrete)
 	_build_staging_area()
 	_build_forward_operating_points()
+	_build_background_city()
+	_build_outer_ruins()
+	_build_ruined_blocks(broken, stone, concrete)
+	_scatter_rubble_field()
+
+
+# ------------------------------------------------------------ the city
+
+## Distant skyline.
+##
+## Beirut's port sits inside the city, and a survey area with nothing on the
+## horizon reads as a film set rather than a place. This is the cheapest
+## possible answer: one MultiMesh of boxes, no collision, no shadows, one draw
+## call for the whole skyline. They are never closer than 115 m, so nothing
+## here is ever anything but a silhouette.
+func _build_background_city() -> void:
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3.ONE
+
+	# The same concrete as the rest of the site rather than flat albedo, or the
+	# skyline reads as untextured placeholder boxes.
+	var mat := Materials.concrete(Color(0.78, 0.76, 0.72))
+	mat.vertex_color_use_as_albedo = true      # per-instance tinting
+	mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	mesh.material = mat
+
+	var blocks: Array = []
+	for i in 150:
+		var angle := _rng.randf() * TAU
+		# Far enough out that these are always silhouettes. At the 118 m they
+		# started at, flying toward the staging area put a wall of untextured
+		# blocks across the whole frame.
+		var radius := _rng.randf_range(152.0, 198.0)
+		# Weighted behind the launch pad, so looking back over the staging area
+		# is city and looking into the site is not.
+		if _rng.randf() < 0.5:
+			angle = lerpf(-PI * 0.40, PI * 0.40, _rng.randf()) + PI * 0.5
+		var x := cos(angle) * radius
+		var z := sin(angle) * radius
+		# The quay is on the seaward side, so the city stops there. A solid
+		# ring would enclose the site like an arena.
+		if z < -120.0 and absf(x) < 110.0:
+			continue
+		if Vector2(x, z).distance_to(PAD_CENTRE) < 46.0:
+			continue                            # keep the sky behind the van open
+		var w := _rng.randf_range(10.0, 22.0)
+		var d := _rng.randf_range(10.0, 22.0)
+		# Taller further out, so the skyline builds up rather than walling the
+		# site in.
+		var h := _rng.randf_range(8.0, 16.0) + (radius - 152.0) * 0.22
+		var shade := _rng.randf_range(0.66, 1.0)
+		blocks.append([Vector3(x, terrain_height(x, z) - 1.0 + h * 0.5, z),
+			Vector3(w, h, d), _rng.randf_range(0.0, 90.0), shade])
+
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = mesh
+	mm.instance_count = blocks.size()
+	for i in blocks.size():
+		var b: Array = blocks[i]
+		var basis := Basis(Vector3.UP, deg_to_rad(float(b[2]))).scaled(b[1] as Vector3)
+		mm.set_instance_transform(i, Transform3D(basis, b[0] as Vector3))
+		var shade: float = b[3]
+		mm.set_instance_color(i, Color(shade, shade * 0.99, shade * 0.95))
+
+	var city := MultiMeshInstance3D.new()
+	city.name = "BackgroundCity"
+	city.multimesh = mm
+	city.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	city.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	_structures.add_child(city)
+
+
+## The city edge immediately behind the staging area: close enough to read as
+## buildings rather than silhouettes, and damaged, because the blast reached
+## this far. These get collision - the operator can fly over here.
+func _build_outer_ruins() -> void:
+	var concrete := Materials.concrete()
+	var broken := Materials.broken_concrete()
+	var stone := Materials.stone()
+
+	var sites := [
+		[Vector3(-58.0, 0.0, 132.0), 18.0, 22.0, 14.0, 0.62],
+		[Vector3(-16.0, 0.0, 148.0), 24.0, 15.0, 16.0, 0.30],
+		[Vector3(34.0, 0.0, 138.0), 16.0, 26.0, 13.0, 0.75],
+		[Vector3(74.0, 0.0, 120.0), 20.0, 19.0, 15.0, 0.45],
+		[Vector3(-92.0, 0.0, 104.0), 15.0, 17.0, 12.0, 0.55],
+		[Vector3(104.0, 0.0, 154.0), 22.0, 24.0, 17.0, 0.35],
+	]
+	for site in sites:
+		var pos: Vector3 = site[0]
+		_build_damaged_block(pos, float(site[1]), float(site[2]), float(site[3]),
+			float(site[4]), concrete, broken, stone)
+
+
+## Ruined city blocks inside the survey area itself. These are the ones the
+## operator flies between, so they carry the detail: standing facades, floor
+## slabs that have pancaked, and the voids between them.
+func _build_ruined_blocks(broken: StandardMaterial3D, stone: StandardMaterial3D,
+		concrete: StandardMaterial3D) -> void:
+	# Kept clear on purpose: the crater bowl, the pipe corridor the mission
+	# funnels the pilot down, and the staging area.
+	var sites := [
+		[Vector3(-84.0, 0.0, -22.0), 16.0, 18.0, 13.0, 0.55],
+		[Vector3(-22.0, 0.0, 60.0), 19.0, 12.0, 15.0, 0.85],
+		[Vector3(64.0, 0.0, 10.0), 15.0, 20.0, 12.0, 0.40],
+		[Vector3(26.0, 0.0, -80.0), 18.0, 9.0, 14.0, 1.00],
+		[Vector3(78.0, 0.0, -68.0), 20.0, 16.0, 16.0, 0.70],
+		[Vector3(-88.0, 0.0, 58.0), 17.0, 11.0, 13.0, 0.95],
+		[Vector3(-70.0, 0.0, -78.0), 14.0, 21.0, 12.0, 0.25],
+	]
+	for site in sites:
+		_build_damaged_block(site[0], float(site[1]), float(site[2]),
+			float(site[3]), float(site[4]), concrete, broken, stone)
+
+
+## One damaged building.
+##
+## `collapse` runs 0 (barely touched, a shell with its floors intact) to 1
+## (flattened into a pancake stack). Everything between is a partial: some
+## floors down, some walls still standing, the rest in a heap at the base.
+func _build_damaged_block(origin: Vector3, width: float, height: float,
+		depth: float, collapse: float, concrete: StandardMaterial3D,
+		broken: StandardMaterial3D, stone: StandardMaterial3D) -> void:
+	var ground := terrain_height(origin.x, origin.z)
+	var yaw := _rng.randf_range(0.0, 360.0)
+	var root := Node3D.new()
+	root.name = "Ruin_%d_%d" % [int(origin.x), int(origin.z)]
+	root.position = Vector3(origin.x, ground, origin.z)
+	root.rotation_degrees.y = yaw
+	_structures.add_child(root)
+
+	var floors := maxi(int(height / 3.4), 1)
+	var standing := int(round(float(floors) * (1.0 - collapse)))
+	var floor_h := 3.4
+
+	# Standing floors: four corner columns and a slab over them.
+	for level in standing:
+		var y := float(level) * floor_h
+		for cx in [-1.0, 1.0]:
+			for cz in [-1.0, 1.0]:
+				_slab(Vector3(0.8, floor_h, 0.8),
+					Vector3(cx * (width * 0.5 - 0.6), y + floor_h * 0.5,
+						cz * (depth * 0.5 - 0.6)),
+					Vector3.ZERO, concrete, root)
+		_slab(Vector3(width, 0.38, depth), Vector3(0.0, y + floor_h, 0.0),
+			Vector3.ZERO, concrete, root)
+
+	# Surviving wall sections on the standing part. Not all four sides - a
+	# building with every wall intact does not read as damaged.
+	if standing > 0:
+		var wall_h := float(standing) * floor_h
+		_slab(Vector3(0.45, wall_h, depth), Vector3(-width * 0.5, wall_h * 0.5, 0.0),
+			Vector3.ZERO, stone, root)
+		if _rng.randf() < 0.65:
+			_slab(Vector3(width, wall_h * 0.7, 0.45),
+				Vector3(0.0, wall_h * 0.35, -depth * 0.5), Vector3.ZERO, stone, root)
+		if _rng.randf() < 0.4:
+			_slab(Vector3(0.45, wall_h * 0.55, depth * 0.6),
+				Vector3(width * 0.5, wall_h * 0.28, depth * 0.2),
+				Vector3(0.0, 0.0, _rng.randf_range(-4.0, 4.0)), stone, root)
+
+	# Collapsed floors, pancaked onto whatever is left standing.
+	var pile_base := float(standing) * floor_h
+	var collapsed := floors - standing
+	for level in collapsed:
+		var lean := _rng.randf_range(-11.0, 11.0)
+		var y := pile_base + float(level) * 0.95 + 0.3
+		_slab(Vector3(width * _rng.randf_range(0.82, 1.02), 0.4,
+				depth * _rng.randf_range(0.82, 1.02)),
+			Vector3(_rng.randf_range(-1.8, 1.8), y, _rng.randf_range(-1.8, 1.8)),
+			Vector3(lean * 0.5, _rng.randf_range(-14.0, 14.0), lean),
+			broken, root)
+		# rubble columns propping the slab, which is what makes the void
+		for c in 2:
+			_slab(Vector3(1.0, 0.8, 1.0),
+				Vector3(_rng.randf_range(-width * 0.35, width * 0.35), y - 0.6,
+					_rng.randf_range(-depth * 0.35, depth * 0.35)),
+				Vector3(0.0, _rng.randf_range(0.0, 90.0), 0.0), broken, root)
+
+	# Debris apron around the base - buildings do not fall straight down.
+	var apron := int(6.0 + collapse * 8.0)
+	for i in apron:
+		var a := _rng.randf() * TAU
+		var r := _rng.randf_range(width * 0.45, width * 0.9)
+		_slab(Vector3(_rng.randf_range(1.2, 3.4), _rng.randf_range(0.4, 1.1),
+				_rng.randf_range(1.2, 3.4)),
+			Vector3(cos(a) * r, _rng.randf_range(0.1, 0.5), sin(a) * r),
+			Vector3(_rng.randf_range(-16.0, 16.0), _rng.randf_range(0.0, 90.0),
+				_rng.randf_range(-16.0, 16.0)),
+			broken, root)
+
+
+## Ground debris across the whole site, thickest along the pipe corridor.
+##
+## Three MultiMeshes - chunks, slab fragments and twisted steel - so the entire
+## field is three draw calls and carries no collision. It is what turns bare
+## terrain into somewhere a building used to be.
+func _scatter_rubble_field() -> void:
+	var chunk := BoxMesh.new()
+	chunk.size = Vector3.ONE
+	var shard := BoxMesh.new()
+	shard.size = Vector3.ONE
+	var bar := BoxMesh.new()
+	bar.size = Vector3.ONE
+
+	var rubble_mat := Materials.broken_concrete()
+	rubble_mat.vertex_color_use_as_albedo = true
+	var steel_mat := Materials.rusted_steel()
+	steel_mat.vertex_color_use_as_albedo = true
+
+	chunk.material = rubble_mat
+	shard.material = rubble_mat
+	bar.material = steel_mat
+
+	var sets := [
+		{"mesh": chunk, "count": 420, "name": "RubbleChunks",
+			"min": Vector3(0.45, 0.3, 0.45), "max": Vector3(1.9, 1.1, 1.9)},
+		{"mesh": shard, "count": 300, "name": "RubbleSlabs",
+			"min": Vector3(1.4, 0.12, 1.0), "max": Vector3(4.2, 0.35, 3.0)},
+		{"mesh": bar, "count": 220, "name": "RubbleSteel",
+			"min": Vector3(0.08, 0.08, 1.6), "max": Vector3(0.22, 0.22, 5.5)},
+	]
+
+	for set_def in sets:
+		var placements: Array = []
+		var attempts := 0
+		while placements.size() < int(set_def.count) and attempts < int(set_def.count) * 6:
+			attempts += 1
+			var x := 0.0
+			var z := 0.0
+			if _rng.randf() < 0.38:
+				# Along the pipe corridor: the mission funnels the pilot down
+				# into this slot, so it is the ground they look at most.
+				x = _rng.randf_range(-76.0, 10.0)
+				z = _rng.randf_range(-2.0, 24.0)
+			else:
+				var a := _rng.randf() * TAU
+				var r := sqrt(_rng.randf()) * 128.0 + 16.0
+				x = epicentre.x + cos(a) * r
+				z = epicentre.z + sin(a) * r
+			if Vector2(x, z).distance_to(PAD_CENTRE) < PAD_CLEAR_RADIUS:
+				continue                       # the staging area stays swept
+			var lo: Vector3 = set_def.min
+			var hi: Vector3 = set_def.max
+			var size := Vector3(
+				_rng.randf_range(lo.x, hi.x),
+				_rng.randf_range(lo.y, hi.y),
+				_rng.randf_range(lo.z, hi.z))
+			placements.append([
+				Vector3(x, terrain_height(x, z) + size.y * 0.35, z), size,
+				Vector3(_rng.randf_range(-22.0, 22.0), _rng.randf_range(0.0, 360.0),
+					_rng.randf_range(-22.0, 22.0)),
+				_rng.randf_range(0.66, 1.0)])
+
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = true
+		mm.mesh = set_def.mesh
+		mm.instance_count = placements.size()
+		for i in placements.size():
+			var e: Array = placements[i]
+			var angles: Vector3 = e[2]
+			var basis := Basis.from_euler(Vector3(deg_to_rad(angles.x),
+				deg_to_rad(angles.y), deg_to_rad(angles.z))).scaled(e[1] as Vector3)
+			mm.set_instance_transform(i, Transform3D(basis, e[0] as Vector3))
+			var shade: float = e[3]
+			mm.set_instance_color(i, Color(shade, shade, shade))
+
+		var node := MultiMeshInstance3D.new()
+		node.name = str(set_def.name)
+		node.multimesh = mm
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		node.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+		_structures.add_child(node)
 
 
 ## Where the drone lives.
@@ -1781,7 +2060,11 @@ func _place_fires() -> void:
 		_hazards.add_child(fire)
 
 
+## Fallback placement, used only when the scene does not provide survivors of
+## its own. The authored copies in scenes/main.tscn are the ones to edit.
 func _place_victims() -> void:
+	if not place_victims:
+		return
 	var casualties := [
 		[Vector3(44.0, 0.0, -40.0), Victim.Pose.TRAPPED, 0.6,
 			"Casualty under the collapsed warehouse truss"],
@@ -1793,8 +2076,8 @@ func _place_victims() -> void:
 			"Ambulatory survivor on the container stack"],
 		[Vector3(-56.0, 0.0, -62.0), Victim.Pose.SEATED, 0.5,
 			"Casualty inside the ruptured silo"],
-		[Vector3(-48.0, 0.0, 12.0), Victim.Pose.PRONE, 0.4,
-			"Casualty beneath the pipe rack"],
+		[Vector3(-44.0, 0.0, 18.0), Victim.Pose.PRONE, 0.35,
+			"Casualty beside the pipe rack"],
 	]
 	for c in casualties:
 		var pos: Vector3 = c[0]

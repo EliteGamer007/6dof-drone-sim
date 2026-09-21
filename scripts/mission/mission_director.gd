@@ -44,8 +44,6 @@ func _ready() -> void:
 			"target": 55, "progress": 0, "done": false},
 		{"id": "structural", "text": "Flag unstable structures",
 			"target": 3, "progress": 0, "done": false},
-		{"id": "rtl", "text": "Land back on the response van",
-			"target": 1, "progress": 0, "done": false},
 	]
 	Sim.finding_logged.connect(_on_finding)
 	objectives_changed.emit()
@@ -60,7 +58,6 @@ func _process(delta: float) -> void:
 	_accumulator = 0.0
 	_update_coverage()
 	_update_gas_map()
-	_update_rtl()
 	_check_complete()
 
 
@@ -149,24 +146,6 @@ func _count_distinct_gases() -> int:
 		if int(f.kind) == Sim.FindingKind.GAS_LEAK and f.has("gas"):
 			seen[int(f.gas)] = true
 	return seen.size()
-
-
-func _update_rtl() -> void:
-	# Only counts once the survey work is done and the aircraft has actually
-	# been somewhere - otherwise it ticks itself on the launch pad.
-	if _drone.total_distance < 60.0:
-		return
-	var others_done := true
-	for o in objectives:
-		if o.id != "rtl" and not o.done:
-			others_done = false
-	if not others_done:
-		_set_progress("rtl", 0)
-		return
-	# Actually back on the deck, not just hovering over the staging area.
-	var home := (_drone.global_position.distance_to(Sim.home_position) < 3.0
-		and _drone.altitude_agl() < 1.4)
-	_set_progress("rtl", 1 if home else 0)
 
 
 func _set_progress(id: String, value: int) -> void:

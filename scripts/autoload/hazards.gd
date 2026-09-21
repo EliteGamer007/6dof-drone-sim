@@ -229,12 +229,12 @@ static func value_noise3(p: Vector3) -> float:
 ## holding heat after sunset. Matches AFTERNOON_SUN in vision_post.gdshader.
 const AFTERNOON_SUN := Vector3(-0.55, 0.62, 0.56)
 
-const SOLAR_GAIN := 11.0
-const SOLAR_STORAGE := 5.6
-const SKY_COOLING := 4.8
-const THERMAL_MASS_GAIN := 5.5
+const SOLAR_GAIN := 6.5
+const SOLAR_STORAGE := 4.2
+const SKY_COOLING := 3.6
+const THERMAL_MASS_GAIN := 3.2
 const GROUND_LAPSE := 0.055
-const CRATER_HEAT := 2.6
+const CRATER_HEAT := 2.0
 
 
 ## Ground-temperature patchiness. Mirrors thermal_patch() in the shader, using
@@ -243,7 +243,7 @@ const CRATER_HEAT := 2.6
 func thermal_patch(p: Vector3) -> float:
 	var a := value_noise3(Vector3(p.x * 0.042, 0.0, p.z * 0.042))
 	var b := value_noise3(Vector3(p.x * 0.155 + 31.7, 0.0, p.z * 0.155 - 11.3))
-	return (a - 0.5) * 2.6 + (b - 0.5) * 1.15
+	return (a - 0.5) * 1.9 + (b - 0.5) * 0.85
 
 
 ## Surface temperature of the environment before any heat source is applied.

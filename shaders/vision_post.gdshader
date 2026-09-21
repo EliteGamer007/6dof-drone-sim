@@ -47,12 +47,12 @@ uniform float thermal_max = 40.0;     // deg C mapped to palette 1.0
 uniform float thermal_gamma = 1.34;   // >1 pushes the background into shadow
 uniform float alert_low = 28.5;       // isotherm band, deg C
 uniform float alert_high = 39.0;
-uniform float solar_gain = 11.0;      // live solar heating on sun-facing faces
-uniform float solar_storage = 5.6;    // heat still stored from the afternoon
-uniform float sky_cooling = 4.8;      // radiative loss of sky-facing surfaces
-uniform float thermal_mass_gain = 5.5;  // dark dense material holds its heat
+uniform float solar_gain = 6.5;       // live solar heating on sun-facing faces
+uniform float solar_storage = 4.2;    // heat still stored from the afternoon
+uniform float sky_cooling = 3.6;      // radiative loss of sky-facing surfaces
+uniform float thermal_mass_gain = 3.2;  // dark dense material holds its heat
 uniform float ground_lapse = 0.055;   // deg C lost per metre above the ground
-uniform float crater_heat = 2.6;      // residual warmth in the blast crater
+uniform float crater_heat = 2.0;      // residual warmth in the blast crater
 uniform vec2 epicentre_xz = vec2(0.0, -12.0);
 uniform float patch_amount = 1.0;     // scales the ground-patchiness term
 uniform float noise_amount : hint_range(0.0, 1.0) = 1.0;
@@ -253,7 +253,7 @@ float apply_heat(vec3 p, float t_env) {
 float thermal_patch(vec3 p) {
 	float a = vnoise3(vec3(p.x * 0.042, 0.0, p.z * 0.042));
 	float b = vnoise3(vec3(p.x * 0.155 + 31.7, 0.0, p.z * 0.155 - 11.3));
-	return ((a - 0.5) * 2.6 + (b - 0.5) * 1.15) * patch_amount;
+	return ((a - 0.5) * 1.9 + (b - 0.5) * 0.85) * patch_amount;
 }
 
 // Surface temperature of the environment itself, before any heat source.

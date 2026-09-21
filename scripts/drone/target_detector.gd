@@ -83,7 +83,12 @@ func _scan(_delta: float) -> void:
 		var confidence := (0.35 + 0.45 * range_score + 0.20 * angle_score)
 		confidence *= target.sensor_advantage(Sim.vision_mode)
 		if not clear_los:
-			confidence *= 0.28                     # partial return through debris
+			# A partial return through debris, not a blind spot. This used to be
+			# 0.28, which pushed anything behind a pipe or a slab below the
+			# display threshold entirely - so a survivor you could plainly see
+			# through a gap simply was not there as far as the payload was
+			# concerned.
+			confidence *= 0.45
 		confidence = clampf(confidence, 0.0, 0.99)
 
 		if confidence < confidence_threshold:

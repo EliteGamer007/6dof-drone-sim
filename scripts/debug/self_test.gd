@@ -258,7 +258,10 @@ func _check_thermal_field() -> void:
 	var flat := Hazards.environment_temperature(here, Vector3.UP)
 	var wall := Hazards.environment_temperature(here,
 		Hazards.AFTERNOON_SUN.normalized())
-	_check("sunward faces read warmer than sky-facing ground", wall > flat + 1.5,
+	# A trace, not a paint job. The coefficients were deliberately softened so
+	# buildings carry a subtle signature instead of standing out as hard blocks,
+	# so this only guards against the contrast vanishing altogether.
+	_check("sunward faces read warmer than sky-facing ground", wall > flat + 0.7,
 		"wall %.1f C vs ground %.1f C" % [wall, flat])
 
 

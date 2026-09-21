@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://c0dronesim0victim"]
+
+[ext_resource type="Script" path="res://scripts/world/victim.gd" id="1_victim"]
+
+[node name="Victim" type="Node3D"]
+script = ExtResource("1_victim")
+pose = 0
+responsive = true
+snap_to_ground = true

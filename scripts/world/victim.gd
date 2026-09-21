@@ -27,6 +27,18 @@ const CLOTHED_LIMB := 30.1
 @export var responsive := true             ## taps on debris to signal position
 @export var clothing := Color(0.32, 0.30, 0.34)
 
+## Drops the figure onto whatever solid surface is under it when the scene
+## starts, so placing one by hand only means getting the X and Z right. Without
+## this every survivor has to be given a Y that matches procedural terrain
+## nobody can see in the editor, which is why they ended up floating and
+## half-buried.
+@export var snap_to_ground := true
+## How far above the authored position to start looking, and how far down to
+## search. Kept short on purpose: a survivor placed in the void under a slab
+## should land on the void floor, not be dragged down through the world.
+@export var snap_from_above := 2.0
+@export var snap_search_depth := 9.0
+
 var _torso: Node3D
 var _left_arm: Node3D
 var _breath := 0.0
@@ -78,6 +90,28 @@ func _ready() -> void:
 
 	if responsive:
 		_build_audio()
+
+	if snap_to_ground:
+		# Deferred: the physics world is not queryable while the tree is still
+		# being built.
+		_snap_to_ground.call_deferred()
+
+
+## Puts the figure's feet on the first solid surface below it.
+func _snap_to_ground() -> void:
+	if not is_inside_tree():
+		return
+	var world := get_world_3d()
+	if world == null:
+		return
+	var from := global_position + Vector3.UP * snap_from_above
+	var to := from + Vector3.DOWN * (snap_from_above + snap_search_depth)
+	var params := PhysicsRayQueryParameters3D.create(from, to)
+	params.collide_with_areas = false
+	var hit := world.direct_space_state.intersect_ray(params)
+	if hit.is_empty():
+		return
+	global_position = Vector3(global_position.x, hit.position.y, global_position.z)
 
 
 func _exit_tree() -> void:

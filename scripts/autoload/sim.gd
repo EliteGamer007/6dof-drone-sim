@@ -46,11 +46,11 @@ signal settings_changed
 # ---------------------------------------------------------------------- state
 
 var vision_mode: VisionMode = VisionMode.NORMAL
-## White hot by default. It is what a search-and-rescue payload is actually
-## flown in: the false-colour LUTs look dramatic in a screenshot and are
-## harder to read, and ironbow in particular turns a whole frame of
-## ambient-temperature ground into one pink wash. B cycles the others.
-var thermal_palette: ThermalPalette = ThermalPalette.WHITE_HOT
+## Ironbow by default: colour reads better than greyscale for spotting a warm
+## body, and the environment model is now soft enough that a frame of
+## ambient-temperature ground sits in the dark violet end instead of washing
+## out. B cycles the other five, including white hot.
+var thermal_palette: ThermalPalette = ThermalPalette.IRONBOW
 
 var mission_running := false
 var mission_time := 0.0

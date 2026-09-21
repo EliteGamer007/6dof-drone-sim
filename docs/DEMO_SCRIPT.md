@@ -112,7 +112,7 @@ If there is time, and only if you are comfortable:
 
 ## 6. Closing — 20 seconds
 
-Land back at the pad. Note the last objective completing.
+Fly back over the pad and set down on the van's deck.
 
 Close on the argument the demo has been making: the drone is not the point, and
 neither is the headset. The point is that a single aircraft with the right two
