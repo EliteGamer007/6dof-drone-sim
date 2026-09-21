@@ -73,11 +73,12 @@ ships with OpenXR **off**, so this should not happen — but if someone has
 turned it on, switch it back:
 
 ```bash
-python tools/gen_project_godot.py
+./vr_mode.sh off        # macOS / Linux
+vr_mode off             # Windows
 ```
 
-Run `python tools/gen_project_godot.py --vr` to turn it back on, and only
-launch with a headset already connected.
+`on` instead of `off` turns it back on. Only launch with OpenXR on if a
+headset is already connected.
 
 **It runs, but slowly.**
 Press `Esc` and set **Graphics** to `LOW`. That drops everything costing a
