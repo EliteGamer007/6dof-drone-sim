@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://c0dronesim0main"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/world/world_builder.gd" id="2_world"]
+[ext_resource type="PackedScene" path="res://scenes/drone.tscn" id="3_drone"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="World" type="Node3D" parent="."]
+script = ExtResource("2_world")
+
+[node name="Drone" parent="." instance=ExtResource("3_drone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 96)

@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/drone/drone.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/drone/dji_fpv.glb" id="2_model"]
+
+[node name="Drone" type="RigidBody3D"]
+script = ExtResource("1_script")
+
+[node name="Airframe" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(0.052, 0, 0, 0, 0.052, 0, 0, 0, 0.052, -0.027, -0.056, 0.039)

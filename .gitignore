@@ -1,0 +1,47 @@
+# Godot 4 import cache and editor state.
+#
+# This is the single most important line in the file. `.godot/` holds the
+# compiled/imported copies of every texture, mesh and HDRI in assets/ - on this
+# project it is over 500 MB, more than twice the size of everything else
+# combined. It is derived data: Godot rebuilds it the first time anyone opens
+# the project, and a copy built on one machine is not reliably usable on
+# another. It must never be committed.
+.godot/
+
+# Older Godot 3 name for the same thing, in case anyone opens this with 3.x.
+.import/
+
+# Exported builds
+build/
+export/
+*.exe
+*.pck
+*.zip
+*.apk
+*.dmg
+
+# Editor-local, per-user settings. Deliberately not shared: these hold window
+# layouts and absolute paths from whoever's machine they came off.
+*.translation
+export_presets.cfg
+.vscode/
+.idea/
+*.swp
+*~
+
+# Screenshots and logs written by the test harness at runtime. The ones that
+# belong in the repo live in docs/screenshots and are committed explicitly.
+shots/
+*.log
+user://
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# NOTE: *.import files ARE committed on purpose.
+# They are small text files holding each asset's import settings and stable
+# resource UID. Without them, every teammate's Godot assigns different UIDs on
+# first open and the scene files stop resolving - which is exactly the "it
+# works on my machine" failure this project has to avoid.

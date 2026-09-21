@@ -1,0 +1,36 @@
+# Keep line endings identical on every machine.
+#
+# GDScript is indented with tabs and Godot writes its own files with LF. If Git
+# rewrites those to CRLF on a Windows checkout, every file looks modified the
+# moment a Mac or Linux teammate touches it, and .tscn/.import diffs become
+# unreadable. Normalise on commit, check out LF everywhere.
+* text=auto eol=lf
+
+# Binary assets: never touch these, and do not try to diff them.
+*.glb     binary
+*.gltf    binary
+*.bin     binary
+*.hdr     binary
+*.exr     binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.webp    binary
+*.ktx     binary
+*.wav     binary
+*.mp3     binary
+*.ogg     binary
+*.ttf     binary
+*.otf     binary
+*.pdf     binary
+
+# Godot text formats, so GitHub highlights and diffs them properly.
+*.gd          text eol=lf linguist-language=GDScript
+*.gdshader    text eol=lf linguist-language=GLSL
+*.tscn        text eol=lf linguist-generated=false
+*.tres        text eol=lf linguist-generated=false
+*.import      text eol=lf linguist-generated=true
+project.godot text eol=lf linguist-generated=true
+
+# The generated input map should not count toward the language statistics.
+tools/*.py text eol=lf
