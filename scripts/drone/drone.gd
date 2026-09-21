@@ -346,11 +346,11 @@ func _build_nav_lights() -> void:
 ## uncommanded drift in any axis.
 @export_group("Handling")
 @export var cruise_speed := 12.0          ## m/s forward
-@export var strafe_ratio := 0.78          ## sideways is slower than forward
+@export var strafe_ratio := 0.88          ## sideways is slower than forward
 @export var climb_speed := 5.0            ## m/s vertical
-@export var accel := 12.0                 ## m/s^2 powering up
+@export var accel := 16.0                 ## m/s^2 powering up
 @export var brake_accel := 16.0           ## m/s^2 with the sticks centred
-@export var vertical_accel := 9.0         ## m/s^2 on the climb axis
+@export var vertical_accel := 12.0        ## m/s^2 on the climb axis
 @export var turn_rate_degrees := 95.0
 @export var turn_accel_degrees := 420.0   ## how fast the yaw rate itself changes
 @export var max_bank_degrees := 26.0      ## visual limit on the airframe lean
@@ -460,7 +460,7 @@ func _update_lean(heading: Basis, delta: float) -> void:
 	var want := Vector2(
 		clampf(atan2(local.z, GRAVITY) * 0.65, -limit, limit),
 		clampf(atan2(-local.x, GRAVITY) * 0.65, -limit, limit))
-	_lean = _lean.lerp(want, clampf(delta * 7.0, 0.0, 1.0))
+	_lean = _lean.lerp(want, clampf(delta * 11.0, 0.0, 1.0))
 	airframe.rotation.x = _lean.x
 	airframe.rotation.z = _lean.y
 

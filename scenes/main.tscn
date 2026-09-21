@@ -1,9 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://c0dronesim0main"]
+[gd_scene load_steps=5 format=3 uid="uid://ekvakpcg0gvd"]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
-[ext_resource type="Script" path="res://scripts/world/world_builder.gd" id="2_world"]
+[ext_resource type="Script" uid="uid://bjy2f1ifkcc4u" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://duglwn6k0tj48" path="res://scripts/world/world_builder.gd" id="2_world"]
 [ext_resource type="PackedScene" path="res://scenes/drone.tscn" id="3_drone"]
-[ext_resource type="PackedScene" path="res://scenes/victim.tscn" id="4_victim"]
+[ext_resource type="PackedScene" uid="uid://du6du8gxr75hc" path="res://scenes/victim.tscn" id="4_victim"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -18,37 +18,31 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 96)
 [node name="Survivors" type="Node3D" parent="."]
 
 [node name="WarehouseTruss" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, 44, 1.3, -40)
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, 44, 1.7757165, -38.120228)
 pose = 2
-responsive = true
 label = "Casualty under the collapsed warehouse truss"
 
 [node name="PancakeVoidA" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(-0.309017, 0, 0.951057, 0, 1, 0, -0.951057, 0, -0.309017, -36, 5.5, 32)
+transform = Transform3D(-0.309017, 0, 0.951057, 0, 1, 0, -0.951057, 0, -0.309017, -36, 5.603407, 32.088802)
 pose = 1
 responsive = false
 label = "Casualty in the void under the pancaked slabs"
 
 [node name="PancakeVoidB" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -40, 6.9, 38)
-pose = 0
-responsive = true
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -40, 8.258648, 38)
 label = "Second casualty, same void"
 
 [node name="ContainerStack" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(-0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, -0.866025, 22, 5.5, 52)
+transform = Transform3D(-0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, -0.866025, 28.877647, 1.3290939, 49.68965)
 pose = 3
-responsive = true
 label = "Ambulatory survivor on the container stack"
 
 [node name="RupturedSilo" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, 0.939693, -56, 2.5, -62)
-pose = 0
-responsive = true
+transform = Transform3D(0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, 0.939693, -56, 2.9971242, -61.250942)
 label = "Casualty inside the ruptured silo"
 
 [node name="PipeRack" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -44, 2.3, 18)
+transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -50.3245, 2.8802392, 18)
 pose = 1
 responsive = false
 label = "Casualty beside the pipe rack"

@@ -42,6 +42,8 @@ signal mission_started
 signal mission_finished(summary: Dictionary)
 signal coverage_changed(percent: float)
 signal settings_changed
+## Blast impulse, picked up by whichever camera rig is live.
+signal camera_shake(strength: float)
 
 # ---------------------------------------------------------------------- state
 

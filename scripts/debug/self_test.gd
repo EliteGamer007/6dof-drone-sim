@@ -200,6 +200,8 @@ func _finish() -> void:
 	_check("report exports", _export_report_ok())
 	_check_launch_pad(drone)
 	_check_contact_tagging()
+	_check_all_survivors_count()
+	_check_detonation()
 	_check_thermal_field()
 	_check_graphics_presets()
 	_check_day_night()
@@ -322,6 +324,68 @@ func _check_day_night() -> void:
 		_main.world.time_preset_name())
 
 	_main.world.set_time_of_day(original)
+
+
+## The reported bug: a survivor could be tagged, and show as tagged in the
+## interface, while the objectives panel refused to count them. Tag every one
+## of them and the counter has to read the full set - no route into the log
+## may be missed.
+func _check_all_survivors_count() -> void:
+	var victims: Array = []
+	for node in get_tree().get_nodes_in_group("detectable"):
+		if node is Victim:
+			victims.append(node)
+	_check("every survivor is present", victims.size() == 6,
+		"%d survivors in the scene" % victims.size())
+
+	for v in victims:
+		_main._tag_contact(v)
+
+	var counted: int = _main.mission._count_kind(Sim.FindingKind.VICTIM)
+	_check("tagging every survivor counts every survivor",
+		counted == victims.size(), "%d of %d" % [counted, victims.size()])
+
+	var progress := -1
+	for o in _main.mission.objectives:
+		if o.id == "survivors":
+			progress = int(o.progress)
+	_check("the objectives panel agrees with the tagged count",
+		progress == victims.size(), "panel reads %d of %d"
+			% [progress, victims.size()])
+
+
+## The detonation has to leave something every sensor can see, not just a
+## particle burst on the daylight camera.
+func _check_detonation() -> void:
+	var barrels := get_tree().get_nodes_in_group(ExplosiveBarrel.GROUP)
+	_check("explosive drums are placed", barrels.size() >= 10,
+		"%d drums" % barrels.size())
+	if barrels.is_empty():
+		return
+
+	var barrel: ExplosiveBarrel = barrels[0]
+	var where := barrel.global_position
+	var heat_before := Hazards.heat_sources.size()
+	barrel.detonate()
+
+	_check("a detonated drum is spent", barrel.spent)
+	_check("detonating leaves a heat source the thermal channel can see",
+		Hazards.heat_sources.size() > heat_before,
+		"%d -> %d" % [heat_before, Hazards.heat_sources.size()])
+
+	var hottest := Hazards.ambient_temp
+	for h in Hazards.heat_sources:
+		var n: Node3D = h.node
+		if is_instance_valid(n) and n.global_position.distance_to(where) < 6.0:
+			hottest = maxf(hottest, float(h.temp) if h.absolute
+				else Hazards.ambient_temp + float(h.temp))
+	_check("the blast is genuinely hot", hottest > 200.0, "%.0f C" % hottest)
+
+	# Pressing detonate again on a spent drum must do nothing at all.
+	var after := Hazards.heat_sources.size()
+	barrel.detonate()
+	_check("a spent drum cannot be detonated twice",
+		Hazards.heat_sources.size() == after)
 
 
 ## The aircraft has to start on the response van's deck, not hovering beside

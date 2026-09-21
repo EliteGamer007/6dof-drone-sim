@@ -58,6 +58,7 @@ func _process(delta: float) -> void:
 	_accumulator = 0.0
 	_update_coverage()
 	_update_gas_map()
+	_recount()
 	_check_complete()
 
 
@@ -121,14 +122,17 @@ func is_covered(c: Vector2i) -> bool:
 
 # --------------------------------------------------------------- objectives
 
-func _on_finding(finding: Dictionary) -> void:
-	match int(finding.kind):
-		Sim.FindingKind.VICTIM:
-			_set_progress("survivors", _count_kind(Sim.FindingKind.VICTIM))
-		Sim.FindingKind.GAS_LEAK:
-			_set_progress("gas", _count_distinct_gases())
-		Sim.FindingKind.STRUCTURAL:
-			_set_progress("structural", _count_kind(Sim.FindingKind.STRUCTURAL))
+func _on_finding(_finding: Dictionary) -> void:
+	_recount()
+
+
+## Recomputes every counter from the world itself rather than from whichever
+## finding just arrived. Cheap, and it cannot drift: the objectives panel now
+## always agrees with what is actually tagged out there.
+func _recount() -> void:
+	_set_progress("survivors", _count_kind(Sim.FindingKind.VICTIM))
+	_set_progress("gas", _count_distinct_gases())
+	_set_progress("structural", _count_kind(Sim.FindingKind.STRUCTURAL))
 
 
 func _count_kind(kind: Sim.FindingKind) -> int:

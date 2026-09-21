@@ -141,6 +141,10 @@ func _accumulate_hold(target: Detectable, confidence: float) -> void:
 	}
 	if target is GasSource:
 		extra["gas"] = (target as GasSource).gas
+	# Marked before logging - see the note in Main._tag_contact. Listeners that
+	# recount on finding_logged have to see this contact already accounted for.
+	target.first_detected_at = Sim.mission_time
+	target.mark_tagged()
 	var finding := Sim.log_finding(
 		target.kind,
 		"%s (%d%% confidence)" % [target.label, int(confidence * 100.0)],
@@ -149,8 +153,6 @@ func _accumulate_hold(target: Detectable, confidence: float) -> void:
 		target.contact_key(),
 		extra)
 	target.finding_id = finding.id
-	target.first_detected_at = Sim.mission_time
-	target.mark_tagged()
 	Sfx.play("detect_ping", -5.0, 1.0, 0.4)
 	target_acquired.emit(target)
 

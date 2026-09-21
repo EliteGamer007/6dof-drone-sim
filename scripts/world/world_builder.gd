@@ -632,10 +632,56 @@ func _build_structures() -> void:
 	_build_quay_wall(concrete)
 	_build_staging_area()
 	_build_forward_operating_points()
+	_build_harbour()
 	_build_background_city()
 	_build_outer_ruins()
 	_build_ruined_blocks(broken, stone, concrete)
 	_scatter_rubble_field()
+	_scatter_explosive_barrels()
+
+
+## The harbour.
+##
+## The quay wall only reads as a quay if there is water on the other side of
+## it. One plane, one shader, no reflections or refraction: at this distance
+## none of that would show and all of it would cost. It sits below the wall
+## top so the wall is genuinely holding the sea back.
+func _build_harbour() -> void:
+	var shader := load("res://shaders/water.gdshader")
+	if shader == null:
+		return
+
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+
+	# A big plane, subdivided just enough for the vertex swell to show near
+	# the wall and not at all further out.
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(620.0, 420.0)
+	plane.subdivide_width = 60
+	plane.subdivide_depth = 40
+	plane.material = mat
+
+	var water := MeshInstance3D.new()
+	water.name = "Harbour"
+	water.mesh = plane
+	# North of the quay wall at z = -122, so the wall is the shoreline.
+	water.position = Vector3(0.0, terrain_height(0.0, -122.0) - 1.1, -336.0)
+	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	water.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	_structures.add_child(water)
+
+	# The ground between the wall and the water line, so there is no gap to
+	# see through at a shallow angle.
+	var apron := Materials.concrete(Color(0.52, 0.50, 0.47))
+	_slab(Vector3(640.0, 3.0, 14.0),
+		Vector3(0.0, terrain_height(0.0, -122.0) - 0.6, -130.0),
+		Vector3.ZERO, apron)
+
+	# Water is the one thing on site that is *colder* than ambient, which is
+	# what makes the shoreline the sharpest edge on the thermal image.
+	Hazards.register_heat_capsule(water, Vector3(-260.0, 0.0, 0.0),
+		Vector3(260.0, 0.0, 0.0), 120.0, -6.0, false, 26.0, Hazards.HeatKind.COLD)
 
 
 # ------------------------------------------------------------ the city
@@ -665,10 +711,16 @@ func _build_background_city() -> void:
 		# started at, flying toward the staging area put a wall of untextured
 		# blocks across the whole frame.
 		var radius := _rng.randf_range(152.0, 198.0)
-		# Weighted behind the launch pad, so looking back over the staging area
-		# is city and looking into the site is not.
-		if _rng.randf() < 0.5:
-			angle = lerpf(-PI * 0.40, PI * 0.40, _rng.randf()) + PI * 0.5
+		# Spread around the landward sides rather than piled up behind the
+		# launch pad. The heaviest weighting is now the western quarter, which
+		# is the ground behind the silos - that horizon was empty.
+		var roll := _rng.randf()
+		if roll < 0.34:
+			angle = lerpf(-PI * 0.34, PI * 0.34, _rng.randf()) + PI      # behind the silos
+		elif roll < 0.58:
+			angle = lerpf(-PI * 0.30, PI * 0.30, _rng.randf())           # east flank
+		elif roll < 0.76:
+			angle = lerpf(-PI * 0.28, PI * 0.28, _rng.randf()) + PI * 0.5
 		var x := cos(angle) * radius
 		var z := sin(angle) * radius
 		# The quay is on the seaward side, so the city stops there. A solid
@@ -908,6 +960,50 @@ func _scatter_rubble_field() -> void:
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		node.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		_structures.add_child(node)
+
+
+## Fuel and gas drums, in the clusters they would actually be stored in.
+##
+## These are the one part of the site the operator can act on rather than only
+## record, so there are enough of them to find one wherever you happen to be.
+func _scatter_explosive_barrels() -> void:
+	var clusters := [
+		[Vector3(38.0, 0.0, -24.0), 5], [Vector3(-30.0, 0.0, -34.0), 4],
+		[Vector3(56.0, 0.0, 30.0), 4], [Vector3(-62.0, 0.0, 30.0), 5],
+		[Vector3(12.0, 0.0, 30.0), 3], [Vector3(-14.0, 0.0, -62.0), 4],
+		[Vector3(70.0, 0.0, -50.0), 3], [Vector3(-78.0, 0.0, -14.0), 4],
+		[Vector3(30.0, 0.0, 66.0), 3], [Vector3(-40.0, 0.0, 62.0), 3],
+	]
+	var kinds := [
+		["Barrel_01", 1.15, 1.0], ["Barrel_02", 0.95, 1.0],
+		["barrel_03", 0.95, 1.0], ["propane_tank", 1.35, 1.0],
+		["small_lpg_tank", 1.2, 1.0],
+	]
+
+	for cluster in clusters:
+		var centre: Vector3 = cluster[0]
+		for i in int(cluster[1]):
+			var kind: Array = kinds[_rng.randi() % kinds.size()]
+			var x := centre.x + _rng.randf_range(-3.4, 3.4)
+			var z := centre.z + _rng.randf_range(-3.4, 3.4)
+			if Vector2(x, z).distance_to(PAD_CENTRE) < PAD_CLEAR_RADIUS:
+				continue
+			var packed := _load_model(str(kind[0]))
+			if packed == null:
+				continue
+
+			var barrel := ExplosiveBarrel.new()
+			barrel.name = "Barrel_%d_%d" % [int(x), int(z)]
+			barrel.model_name = str(kind[0])
+			barrel.power = float(kind[1])
+			barrel.position = _ground(x, z)
+			barrel.rotation_degrees.y = _rng.randf_range(0.0, 360.0)
+			_props.add_child(barrel)
+
+			var body := packed.instantiate()
+			if body is Node3D:
+				body.scale = Vector3.ONE * float(kind[2])
+			barrel.attach_body(body)
 
 
 ## Where the drone lives.
@@ -1265,6 +1361,17 @@ func _build_light_bar(parent: Node3D, pos: Vector3, width: float,
 		light.shadow_enabled = false
 		light.add_to_group(NIGHT_LIGHT_GROUP)
 		parent.add_child(light)
+
+		# Alternating flash. Every emergency vehicle on site runs its bar on
+		# the same clock but on opposite halves, so the staging area has a
+		# constant red/blue beat instead of standing still.
+		var beacon := BeaconLight.new()
+		beacon.name = "Beacon"
+		beacon.lamp = mi
+		beacon.light = light
+		beacon.base_colour = colour
+		beacon.phase = float(i) * 0.5
+		parent.add_child(beacon)
 
 
 # ------------------------------------------------------- casualty point

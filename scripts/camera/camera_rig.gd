@@ -33,6 +33,8 @@ var _drone: Drone
 var _zoom := 1.0
 var _spring: SpringArm3D
 var _shake := 0.0
+var _shake_time := 0.0
+var _shake_power := 0.0
 
 
 func setup(drone: Drone) -> void:
@@ -58,19 +60,25 @@ func _ready() -> void:
 	_spring.margin = 0.22
 	add_child(_spring)
 
+	Sim.camera_shake.connect(_on_camera_shake)
+
 
 func _process(delta: float) -> void:
 	if _drone == null or not is_instance_valid(_drone):
 		return
 	_handle_input(delta)
 
+	_shake_time = maxf(_shake_time - delta, 0.0)
+
 	match view:
 		View.CHASE:
-			_update_follow(delta, chase_distance, chase_height, 0.0, 7.0)
+			_update_follow(delta, chase_distance, chase_height, 0.0, 16.0)
 		View.CLOSE:
-			_update_follow(delta, close_distance, close_height, close_shoulder, 11.0)
+			_update_follow(delta, close_distance, close_height, close_shoulder, 22.0)
 		View.FPV:
 			_update_fpv(delta)
+
+	_apply_shake(delta)
 
 	var target_fov: float = VIEW_FOV[view] / _zoom
 	camera.fov = lerpf(camera.fov, target_fov, clampf(delta * 8.0, 0.0, 1.0))
@@ -101,10 +109,22 @@ func _update_follow(delta: float, distance: float, height: float,
 	_spring.spring_length = distance * (1.0 + _drone.ground_speed() * 0.03)
 
 	var desired := _spring.global_position + basis * Vector3(0.0, 0.0, _spring.get_hit_length())
-	camera.global_position = camera.global_position.lerp(desired,
+
+	# Smooth the *offset* from the aircraft, not the world position. Chasing
+	# the world position meant every translation - strafe, reverse, climb -
+	# dragged the camera behind and then snapped it back, which is the laggy
+	# feel. This way the rig tracks the aircraft rigidly and only the shape of
+	# the shot eases, so sideways motion is as crisp as forward motion.
+	var anchor := _drone.global_position
+	var current_offset := camera.global_position - anchor
+	var wanted_offset := desired - anchor
+	current_offset = current_offset.lerp(wanted_offset,
 		clampf(delta * follow_rate, 0.0, 1.0))
-	# Lead the aircraft slightly so the camera looks where it is going.
-	var look_at_point := _drone.global_position + _drone.linear_velocity * 0.12
+	camera.global_position = anchor + current_offset
+
+	# A small lead so the camera looks where it is going. Kept short: a long
+	# lead swings the whole frame every time the stick moves.
+	var look_at_point := _drone.global_position + _drone.linear_velocity * 0.05
 	camera.look_at(look_at_point, Vector3.UP)
 
 
@@ -132,6 +152,30 @@ func _update_fpv(delta: float) -> void:
 
 	camera.global_position = mount.global_position
 	camera.global_basis = basis
+
+
+## Blast shake, applied after the view has positioned the camera so it works
+## identically in all three - including FPV, where it reads as the airframe
+## being hit by the pressure wave.
+func _on_camera_shake(strength: float) -> void:
+	_shake_power = maxf(_shake_power, strength)
+	_shake_time = maxf(_shake_time, 0.7 * strength)
+
+
+func _apply_shake(_delta: float) -> void:
+	if _shake_time <= 0.0:
+		_shake_power = 0.0
+		return
+	var amount := _shake_power * _shake_time * 0.32
+	var t := Time.get_ticks_msec() * 0.001
+	camera.global_position += Vector3(
+		sin(t * 53.0) * amount * 0.22,
+		sin(t * 71.0) * amount * 0.18,
+		sin(t * 61.0) * amount * 0.22)
+	camera.global_basis = camera.global_basis * Basis.from_euler(Vector3(
+		sin(t * 67.0) * amount * 0.04,
+		sin(t * 59.0) * amount * 0.04,
+		sin(t * 73.0) * amount * 0.05))
 
 
 func view_name() -> String:

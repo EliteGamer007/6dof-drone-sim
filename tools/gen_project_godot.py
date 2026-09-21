@@ -112,7 +112,9 @@ ACTIONS: dict[str, tuple[float, list[str]]] = {
     "vision_normal": (0.5, [key("1")]),
     "vision_night":  (0.5, [key("3")]),
     "vision_gas":    (0.5, [key("4")]),
-    "thermal_palette": (0.5, [key("B")]),
+    "thermal_palette": (0.5, [key("M")]),
+    # B is the detonate key on both, which is why the palette moved to M.
+    "detonate":      (0.5, [btn("B"), key("B")]),
     "toggle_trail":  (0.5, [key("K")]),
     # ---- mission ------------------------------------------------------------
     "drop_marker":   (0.5, [btn("A"), key("X")]),

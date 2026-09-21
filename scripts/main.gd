@@ -149,6 +149,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		drop_marker()
 	elif Input.is_action_just_pressed("capture_photo"):
 		capture_evidence()
+	elif Input.is_action_just_pressed("detonate"):
+		detonate_nearest()
 
 
 func _process(_delta: float) -> void:
@@ -230,12 +232,17 @@ func _tag_contact(target: Detectable) -> void:
 	if target is GasSource:
 		extra["gas"] = (target as GasSource).gas
 
+	# Flagged as tagged *before* the finding is logged. Logging emits
+	# finding_logged, and anything that recounts on that signal reads the
+	# contacts themselves - so marking afterwards left every counter exactly
+	# one behind. Tag the last survivor and the objectives panel would sit at
+	# five of six forever.
+	target.first_detected_at = Sim.mission_time
+	target.mark_tagged()
 	var finding := Sim.log_finding(target.kind,
 		"%s (%d%% confidence)" % [target.label, int(confidence * 100.0)],
 		target.severity, target.global_position, target.contact_key(), extra)
 	target.finding_id = finding.id
-	target.first_detected_at = Sim.mission_time
-	target.mark_tagged()
 	Sim.marker_dropped.emit(finding)
 	Sfx.play("marker_drop", -4.0)
 
@@ -265,6 +272,24 @@ func _drop_reference_point(camera: Camera3D) -> void:
 			"value": readings[worst],
 		}))
 	Sfx.play("marker_drop", -4.0)
+
+
+## Sets off a fuel drum: whichever one the reticle is pointing at, or failing
+## that the nearest live one to the aircraft. Aiming wins, so a cluster can be
+## taken apart one barrel at a time.
+func detonate_nearest() -> void:
+	var camera := get_viewport().get_camera_3d()
+	var barrel: ExplosiveBarrel = null
+	if camera:
+		barrel = ExplosiveBarrel.under_reticle(get_tree(), camera.global_position,
+			-camera.global_basis.z)
+	if barrel == null:
+		barrel = ExplosiveBarrel.nearest(get_tree(), drone.global_position, 70.0)
+	if barrel == null:
+		Sim.toast.emit("NO DRUM IN RANGE", Sim.Severity.INFO)
+		Sfx.play("ui_click", -8.0)
+		return
+	barrel.detonate()
 
 
 ## Saves a framed still with the mission metadata burnt into the filename, the
