@@ -39,6 +39,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 96)
 
 [node name="ResponseVan" parent="StagingArea" instance=ExtResource("5_response_van")]
 transform = Transform3D(0.990268, 0, 0.139173, 0, 1, 0, -0.139173, 0, 0.990268, 0, 0.310268, 96)
+bar_colours = PackedColorArray(1, 0.18, 0.16, 1, 0.25, 0.45, 1, 1)
 
 [node name="WindMast" parent="StagingArea" instance=ExtResource("6_wind_mast")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.413508, 84)
@@ -46,35 +47,35 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.413508, 84)
 [node name="Cordon" type="Node3D" parent="StagingArea"]
 
 [node name="Barrier1" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
-transform = Transform3D(0.882948, 0, 0.469472, 0, 1, 0, -0.469472, 0, 0.882948, -7.505055, 0.108403, 99.990508)
+transform = Transform3D(0.882948, 0, 0.469472, 0, 1, 0, -0.469472, 0, 0.882948, -7.505055, 0.108403, 99.99051)
 model_name = "concrete_road_barrier"
 
 [node name="Barrier2" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
-transform = Transform3D(0.559193, 0, 0.829038, 0, 1, 0, -0.829038, 0, 0.559193, -4.75314, 0.092025, 103.046819)
+transform = Transform3D(0.559193, 0, 0.829038, 0, 1, 0, -0.829038, 0, 0.559193, -4.75314, 0.092025, 103.04682)
 model_name = "concrete_road_barrier"
 
 [node name="Barrier3" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
-transform = Transform3D(-0.559193, 0, 0.829038, 0, 1, 0, -0.829038, 0, -0.559193, 4.75314, 0.121643, 103.046819)
+transform = Transform3D(-0.559193, 0, 0.829038, 0, 1, 0, -0.829038, 0, -0.559193, 4.75314, 0.121643, 103.04682)
 model_name = "concrete_road_barrier"
 
 [node name="Barrier4" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
-transform = Transform3D(-0.882948, 0, 0.469472, 0, 1, 0, -0.469472, 0, -0.882948, 7.505055, 0.171586, 99.990508)
+transform = Transform3D(-0.882948, 0, 0.469472, 0, 1, 0, -0.469472, 0, -0.882948, 7.505055, 0.171586, 99.99051)
 model_name = "concrete_road_barrier"
 
 [node name="Barrier5" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
-transform = Transform3D(-0.882948, 0, -0.469472, 0, 1, 0, 0.469472, 0, -0.882948, 7.505055, 0.3483, 92.009492)
+transform = Transform3D(-0.882948, 0, -0.469472, 0, 1, 0, 0.469472, 0, -0.882948, 7.505055, 0.3483, 92.00949)
 model_name = "concrete_road_barrier"
 
 [node name="Barrier6" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
-transform = Transform3D(-0.469472, 0, -0.882948, 0, 1, 0, 0.882948, 0, -0.469472, 3.990508, 0.351276, 88.494945)
+transform = Transform3D(-0.469472, 0, -0.882948, 0, 1, 0, 0.882948, 0, -0.469472, 3.990508, 0.351276, 88.49494)
 model_name = "concrete_road_barrier"
 
 [node name="Barrier7" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
-transform = Transform3D(0.469472, 0, -0.882948, 0, 1, 0, 0.882948, 0, 0.469472, -3.990508, 0.38235, 88.494945)
+transform = Transform3D(0.469472, 0, -0.882948, 0, 1, 0, 0.882948, 0, 0.469472, -3.990508, 0.38235, 88.49494)
 model_name = "concrete_road_barrier"
 
 [node name="Barrier8" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
-transform = Transform3D(0.882948, 0, -0.469472, 0, 1, 0, 0.469472, 0, 0.882948, -7.505055, 0.313714, 92.009492)
+transform = Transform3D(0.882948, 0, -0.469472, 0, 1, 0, 0.469472, 0, 0.882948, -7.505055, 0.313714, 92.00949)
 model_name = "concrete_road_barrier"
 
 [node name="Kit" type="Node3D" parent="StagingArea"]
@@ -89,7 +90,6 @@ model_name = "portable_generator"
 
 [node name="WoodenCrate" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
 transform = Transform3D(0.951057, 0, 0.309017, 0, 1, 0, -0.309017, 0, 0.951057, 4.4, 0.319545, 94)
-model_name = "wooden_crate_01"
 
 [node name="PlasticCrate" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
 transform = Transform3D(-0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, -0.939693, 4.9, 0.320577, 95.6)
@@ -114,12 +114,13 @@ transform = Transform3D(0.913545, 0, -0.406737, 0, 1, 0, 0.406737, 0, 0.913545, 
 
 [node name="Ambulance" parent="Response" instance=ExtResource("9_ambulance")]
 transform = Transform3D(0.978148, 0, -0.207912, 0, 1, 0, 0.207912, 0, 0.978148, 18.81, 0.683721, 76.44)
+bar_colours = PackedColorArray(1, 0.18, 0.16, 1, 0.25, 0.45, 1, 1)
 
 [node name="FireAppliance" parent="Response" instance=ExtResource("10_fire_appliance")]
 transform = Transform3D(-0.927184, 0, 0.374607, 0, 1, 0, -0.374607, 0, -0.927184, 38, 2.591344, 32)
 
 [node name="AccessRoute" parent="Response" instance=ExtResource("11_access_route")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+waypoints = PackedVector2Array(4, 88, 10, 76, 14, 62, 12, 48, 2, 36, -14, 28, -26, 22)
 
 [node name="Site" type="Node3D" parent="."]
 
@@ -148,107 +149,102 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.419751, -122)
 
 [node name="NorthTerrace" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(-0.614814, 0, 0.788672, 0, 1, 0, -0.788672, 0, -0.614814, -58, 0.271499, 132)
-seed = 3688
 width = 18.0
 height = 22.0
 depth = 14.0
 collapse = 0.62
+seed = 3688
 
 [node name="HarbourOffices" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(-0.937501, 0, -0.347982, 0, 1, 0, 0.347982, 0, -0.937501, -16, 0.155841, 148)
-seed = 7131
 width = 24.0
 height = 15.0
 depth = 16.0
-collapse = 0.30
+collapse = 0.3
+seed = 7131
 
 [node name="CornerShops" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(0.217734, 0, -0.976008, 0, 1, 0, 0.976008, 0, 0.217734, 74, -0.332971, 120)
-seed = 3803
 width = 20.0
 height = 19.0
 depth = 15.0
 collapse = 0.45
+seed = 3803
 
 [node name="SiloWestA" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(-0.328082, 0, -0.944649, 0, 1, 0, 0.944649, 0, -0.328082, -100, -0.080093, -60)
-seed = 9801
-width = 16.0
 height = 26.0
 depth = 13.0
 collapse = 0.75
+seed = 9801
 
 [node name="SiloWestB" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(-0.913462, 0, -0.406924, 0, 1, 0, 0.406924, 0, -0.913462, -96, 0.395252, -96)
-seed = 4714
 width = 15.0
 height = 17.0
-depth = 12.0
 collapse = 0.55
+seed = 4714
 
 [node name="DockOffice" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(0.900694, 0, 0.434453, 0, 1, 0, -0.434453, 0, 0.900694, 92, -0.130875, -100)
-seed = 4190
 width = 22.0
 height = 24.0
 depth = 17.0
 collapse = 0.35
+seed = 4190
 
 [node name="Terrace3" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(0.926943, 0, -0.375203, 0, 1, 0, 0.375203, 0, 0.926943, -84, 0.288606, -22)
-seed = 9441
-width = 16.0
 height = 18.0
 depth = 13.0
 collapse = 0.55
+seed = 9441
 
 [node name="Flats" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(-0.950084, 0, -0.311994, 0, 1, 0, 0.311994, 0, -0.950084, -22, 2.816121, 60)
-seed = 6977
 width = 19.0
 height = 12.0
 depth = 15.0
 collapse = 0.85
+seed = 6977
 
 [node name="Depot" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(-0.568859, 0, -0.822435, 0, 1, 0, 0.822435, 0, -0.568859, 64, 3.893355, 10)
-seed = 6701
 width = 15.0
 height = 20.0
-depth = 12.0
-collapse = 0.40
+collapse = 0.4
+seed = 6701
 
 [node name="Pancaked" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(-0.874702, 0, 0.484662, 0, 1, 0, -0.484662, 0, -0.874702, 26, 2.736331, -80)
-seed = 2180
 width = 18.0
 height = 9.0
 depth = 14.0
-collapse = 1.00
+collapse = 1.0
+seed = 2180
 
 [node name="Stores" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(0.205058, 0, -0.97875, 0, 1, 0, 0.97875, 0, 0.205058, 78, 0.095205, -68)
-seed = 7209
 width = 20.0
 height = 16.0
 depth = 16.0
-collapse = 0.70
+collapse = 0.7
+seed = 7209
 
 [node name="Garages" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(-0.945133, 0, 0.326687, 0, 1, 0, -0.326687, 0, -0.945133, -88, 0.166542, 58)
-seed = 5767
 width = 17.0
 height = 11.0
 depth = 13.0
 collapse = 0.95
+seed = 5767
 
 [node name="Tower" parent="City" instance=ExtResource("19_ruined_building")]
 transform = Transform3D(0.980952, 0, 0.194251, 0, 1, 0, -0.194251, 0, 0.980952, -70, 0.00022, -78)
-seed = 4947
 width = 14.0
 height = 21.0
-depth = 12.0
 collapse = 0.25
+seed = 4947
 
 [node name="Hazards" type="Node3D" parent="."]
 
@@ -256,12 +252,10 @@ collapse = 0.25
 
 [node name="LpgLeak" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 1.52723, 10)
-label = "Ruptured LPG line under the pipe rack"
-gas = 3
 strength = 78.0
 plume_radius = 3.4
 plume_length = 30.0
-visible_vapour = true
+label = "Ruptured LPG line under the pipe rack"
 
 [node name="Tank" parent="Hazards/GasLeaks/LpgLeak" instance=ExtResource("7_prop_model")]
 transform = Transform3D(0.111095, 0, -0.99381, 0, 1, 0, 0.99381, 0, 0.111095, 0, 0, 0)
@@ -269,12 +263,9 @@ model_name = "small_lpg_tank"
 
 [node name="PropaneLeak" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, -0.948917, -22)
-label = "Propane cylinder venting inside the warehouse"
-gas = 3
 strength = 55.0
-plume_radius = 2.6
 plume_length = 22.0
-visible_vapour = true
+label = "Propane cylinder venting inside the warehouse"
 
 [node name="Tank" parent="Hazards/GasLeaks/PropaneLeak" instance=ExtResource("7_prop_model")]
 transform = Transform3D(-0.95964, 0, -0.28123, 0, 1, 0, 0.28123, 0, -0.95964, 0, 0, 0)
@@ -282,30 +273,28 @@ model_name = "propane_tank"
 
 [node name="CraterNO2" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -8.717117, -20)
-label = "Residual nitrogen dioxide over the detonation seat"
 gas = 2
 strength = 14.0
 plume_radius = 9.0
 plume_length = 46.0
-visible_vapour = true
+label = "Residual nitrogen dioxide over the detonation seat"
 
 [node name="DrainageH2S" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, 4.155211, 40)
-label = "Hydrogen sulphide from the drainage void under the collapse"
 gas = 1
 strength = 34.0
 plume_radius = 4.2
 plume_length = 18.0
 visible_vapour = false
+label = "Hydrogen sulphide from the drainage void under the collapse"
 
 [node name="ContainerYardCO" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 3.849007, 44)
-label = "Fuel fire smouldering in the container yard"
 gas = 0
-strength = 260.0
 plume_radius = 3.0
 plume_length = 26.0
 visible_vapour = false
+label = "Fuel fire smouldering in the container yard"
 
 [node name="Tank" parent="Hazards/GasLeaks/ContainerYardCO" instance=ExtResource("7_prop_model")]
 transform = Transform3D(-0.875103, 0, -0.483936, 0, 1, 0, 0.483936, 0, -0.875103, 0, 0, 0)
@@ -313,29 +302,29 @@ model_name = "metal_jerrycan"
 
 [node name="SiloO2" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 3.099888, -60)
-label = "Oxygen-deficient atmosphere inside the ruptured silo"
 gas = 4
 strength = 3.8
 plume_radius = 5.0
 plume_length = 8.0
 visible_vapour = false
+label = "Oxygen-deficient atmosphere inside the ruptured silo"
 
 [node name="Fires" type="Node3D" parent="Hazards"]
 
 [node name="ContainerYardFire" parent="Hazards/Fires" instance=ExtResource("21_fire")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3.343237, 40)
-label = "Container yard fire"
 intensity = 1.35
+label = "Container yard fire"
 
 [node name="SiloApronFire" parent="Hazards/Fires" instance=ExtResource("21_fire")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, -3.096603, -44)
+intensity = 0.9
 label = "Burning debris on the silo apron"
-intensity = 0.90
 
 [node name="WarehouseDoorFire" parent="Hazards/Fires" instance=ExtResource("21_fire")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 1.938601, -8)
-label = "Vehicle fire at the warehouse door"
 intensity = 0.65
+label = "Vehicle fire at the warehouse door"
 
 [node name="Structural" type="Node3D" parent="Hazards"]
 
@@ -367,29 +356,27 @@ board_colour = Color(0.95, 0.78, 0.1, 1)
 [node name="FlammableAtmosphere" parent="Hazards/Signs" instance=ExtResource("23_hazard_sign")]
 transform = Transform3D(0.374607, 0, -0.927184, 0, 1, 0, 0.927184, 0, 0.374607, -42, 1.336777, 16)
 text = "Flammable atmosphere"
-board_colour = Color(0.92, 0.2, 0.16, 1)
 
 [node name="ActiveFire" parent="Hazards/Signs" instance=ExtResource("23_hazard_sign")]
 transform = Transform3D(-0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, -0.866025, 24, 3.014219, 44)
 text = "Active fire - no entry"
-board_colour = Color(0.92, 0.2, 0.16, 1)
 
 [node name="ExplosiveDrums" type="Node3D" parent="."]
 
 [node name="Drum01" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.111213, 0, 0.993797, 0, 1, 0, -0.993797, 0, 0.111213, 35.806548, -3.533785, -23.041817)
+transform = Transform3D(0.111213, 0, 0.993797, 0, 1, 0, -0.993797, 0, 0.111213, 35.80655, -3.533785, -23.041817)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum02" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.762579, 0, 0.646895, 0, 1, 0, -0.646895, 0, 0.762579, 37.665467, -2.921836, -24.306281)
+transform = Transform3D(0.762579, 0, 0.646895, 0, 1, 0, -0.646895, 0, 0.762579, 37.665466, -2.921836, -24.30628)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum03" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.952769, 0, -0.303695, 0, 1, 0, 0.303695, 0, -0.952769, 36.734603, -3.39506, -22.15751)
+transform = Transform3D(-0.952769, 0, -0.303695, 0, 1, 0, 0.303695, 0, -0.952769, 36.734604, -3.39506, -22.15751)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum04" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
 transform = Transform3D(0.512389, 0, -0.858753, 0, 1, 0, 0.858753, 0, 0.512389, 35.509808, -3.355708, -25.083439)
@@ -397,7 +384,7 @@ model_name = "barrel_03"
 power = 0.95
 
 [node name="Drum05" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.992977, 0, -0.118306, 0, 1, 0, 0.118306, 0, 0.992977, 38.659543, -2.744421, -21.453852)
+transform = Transform3D(0.992977, 0, -0.118306, 0, 1, 0, 0.118306, 0, 0.992977, 38.659542, -2.744421, -21.453852)
 model_name = "propane_tank"
 power = 1.35
 
@@ -407,18 +394,17 @@ model_name = "barrel_03"
 power = 0.95
 
 [node name="Drum07" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.32637, 0, 0.945242, 0, 1, 0, -0.945242, 0, -0.32637, -28.704912, -3.07004, -34.981249)
+transform = Transform3D(-0.32637, 0, 0.945242, 0, 1, 0, -0.945242, 0, -0.32637, -28.704912, -3.07004, -34.98125)
 model_name = "Barrel_02"
 power = 0.95
 
 [node name="Drum08" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.955069, 0, -0.296385, 0, 1, 0, 0.296385, 0, -0.955069, -33.256194, -2.299729, -32.595011)
+transform = Transform3D(-0.955069, 0, -0.296385, 0, 1, 0, 0.296385, 0, -0.955069, -33.256195, -2.299729, -32.595013)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum09" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.015381, 0, -0.999882, 0, 1, 0, 0.999882, 0, 0.015381, -27.641123, -3.18997, -33.250721)
-model_name = "Barrel_01"
+transform = Transform3D(0.015381, 0, -0.999882, 0, 1, 0, 0.999882, 0, 0.015381, -27.641123, -3.18997, -33.25072)
 power = 1.15
 
 [node name="Drum10" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
@@ -428,63 +414,59 @@ power = 0.95
 
 [node name="Drum11" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
 transform = Transform3D(0.804892, 0, 0.593422, 0, 1, 0, -0.593422, 0, 0.804892, 53.284073, 3.852476, 28.358564)
-model_name = "Barrel_01"
 power = 1.15
 
 [node name="Drum12" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.819365, 0, 0.573272, 0, 1, 0, -0.573272, 0, -0.819365, 57.233522, 3.569435, 29.116621)
-model_name = "Barrel_01"
+transform = Transform3D(-0.819365, 0, 0.573272, 0, 1, 0, -0.573272, 0, -0.819365, 57.23352, 3.569435, 29.116621)
 power = 1.15
 
 [node name="Drum13" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.97315, 0, -0.230171, 0, 1, 0, 0.230171, 0, -0.97315, 56.735059, 3.794475, 27.415812)
+transform = Transform3D(-0.97315, 0, -0.230171, 0, 1, 0, 0.230171, 0, -0.97315, 56.735058, 3.794475, 27.415812)
 model_name = "Barrel_02"
 power = 0.95
 
 [node name="Drum14" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.190432, 0, -0.9817, 0, 1, 0, 0.9817, 0, 0.190432, -58.926691, 2.932369, 29.96466)
-model_name = "Barrel_01"
+transform = Transform3D(0.190432, 0, -0.9817, 0, 1, 0, 0.9817, 0, 0.190432, -58.92669, 2.932369, 29.96466)
 power = 1.15
 
 [node name="Drum15" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.787204, 0, 0.616693, 0, 1, 0, -0.616693, 0, 0.787204, -60.394429, 2.626161, 32.016541)
+transform = Transform3D(0.787204, 0, 0.616693, 0, 1, 0, -0.616693, 0, 0.787204, -60.39443, 2.626161, 32.01654)
 model_name = "Barrel_02"
 power = 0.95
 
 [node name="Drum16" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.050542, 0, -0.998722, 0, 1, 0, 0.998722, 0, 0.050542, -61.466585, 3.037535, 27.430766)
+transform = Transform3D(0.050542, 0, -0.998722, 0, 1, 0, 0.998722, 0, 0.050542, -61.466583, 3.037535, 27.430765)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum17" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.659733, 0, -0.7515, 0, 1, 0, 0.7515, 0, 0.659733, -59.068143, 2.54461, 33.256439)
+transform = Transform3D(0.659733, 0, -0.7515, 0, 1, 0, 0.7515, 0, 0.659733, -59.068142, 2.54461, 33.25644)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum18" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.788633, 0, -0.614864, 0, 1, 0, 0.614864, 0, -0.788633, -60.788111, 2.882558, 29.26088)
+transform = Transform3D(-0.788633, 0, -0.614864, 0, 1, 0, 0.614864, 0, -0.788633, -60.788113, 2.882558, 29.26088)
 model_name = "barrel_03"
 power = 0.95
 
 [node name="Drum19" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
 transform = Transform3D(-0.803057, 0, 0.595903, 0, 1, 0, -0.595903, 0, -0.803057, 8.648365, -0.468562, 32.223476)
-model_name = "Barrel_01"
 power = 1.15
 
 [node name="Drum20" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.393058, 0, 0.919514, 0, 1, 0, -0.919514, 0, -0.393058, 14.297427, -1.674908, 29.596261)
+transform = Transform3D(-0.393058, 0, 0.919514, 0, 1, 0, -0.919514, 0, -0.393058, 14.297427, -1.674908, 29.59626)
 model_name = "Barrel_02"
 power = 0.95
 
 [node name="Drum21" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.990341, 0, -0.138651, 0, 1, 0, 0.138651, 0, -0.990341, 11.825518, -0.790867, 31.576913)
+transform = Transform3D(-0.990341, 0, -0.138651, 0, 1, 0, 0.138651, 0, -0.990341, 11.825518, -0.790867, 31.576914)
 model_name = "barrel_03"
 power = 0.95
 
 [node name="Drum22" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.984063, 0, -0.177819, 0, 1, 0, 0.177819, 0, -0.984063, -13.674769, 3.08355, -65.315451)
+transform = Transform3D(-0.984063, 0, -0.177819, 0, 1, 0, 0.177819, 0, -0.984063, -13.674769, 3.08355, -65.31545)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum23" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
 transform = Transform3D(-0.337067, 0, -0.941481, 0, 1, 0, 0.941481, 0, -0.337067, -11.453382, 2.969868, -64.51503)
@@ -498,7 +480,6 @@ power = 1.35
 
 [node name="Drum25" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
 transform = Transform3D(-0.356359, 0, 0.934349, 0, 1, 0, -0.934349, 0, -0.356359, -14.395228, 2.638018, -63.91381)
-model_name = "Barrel_01"
 power = 1.15
 
 [node name="Drum26" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
@@ -507,80 +488,76 @@ model_name = "propane_tank"
 power = 1.35
 
 [node name="Drum27" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.90722, 0, 0.420657, 0, 1, 0, -0.420657, 0, 0.90722, 70.662636, 1.263618, -49.554822)
-model_name = "Barrel_01"
+transform = Transform3D(0.90722, 0, 0.420657, 0, 1, 0, -0.420657, 0, 0.90722, 70.662636, 1.263618, -49.55482)
 power = 1.15
 
 [node name="Drum28" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.409434, 0, -0.91234, 0, 1, 0, 0.91234, 0, 0.409434, 68.804897, 1.480559, -47.724799)
+transform = Transform3D(0.409434, 0, -0.91234, 0, 1, 0, 0.91234, 0, 0.409434, 68.80489, 1.480559, -47.7248)
 model_name = "Barrel_02"
 power = 0.95
 
 [node name="Drum29" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.997152, 0, 0.075413, 0, 1, 0, -0.075413, 0, -0.997152, -76.21301, 1.423233, -16.784078)
-model_name = "Barrel_01"
+transform = Transform3D(-0.997152, 0, 0.075413, 0, 1, 0, -0.075413, 0, -0.997152, -76.21301, 1.423233, -16.784079)
 power = 1.15
 
 [node name="Drum30" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.964892, 0, -0.262646, 0, 1, 0, 0.262646, 0, -0.964892, -76.943423, 1.407973, -14.020446)
+transform = Transform3D(-0.964892, 0, -0.262646, 0, 1, 0, 0.262646, 0, -0.964892, -76.94342, 1.407973, -14.020446)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum31" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.946896, 0, -0.32154, 0, 1, 0, 0.32154, 0, 0.946896, -79.666629, 1.105863, -10.960394)
+transform = Transform3D(0.946896, 0, -0.32154, 0, 1, 0, 0.32154, 0, 0.946896, -79.666626, 1.105863, -10.960394)
 model_name = "propane_tank"
 power = 1.35
 
 [node name="Drum32" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.940526, 0, -0.339721, 0, 1, 0, 0.339721, 0, 0.940526, -75.330875, 1.444354, -11.528673)
+transform = Transform3D(0.940526, 0, -0.339721, 0, 1, 0, 0.339721, 0, 0.940526, -75.33087, 1.444354, -11.528673)
 model_name = "barrel_03"
 power = 0.95
 
 [node name="Drum33" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.878166, 0, 0.478355, 0, 1, 0, -0.478355, 0, -0.878166, 27.161931, 1.00767, 69.079712)
+transform = Transform3D(-0.878166, 0, 0.478355, 0, 1, 0, -0.478355, 0, -0.878166, 27.16193, 1.00767, 69.07971)
 model_name = "barrel_03"
 power = 0.95
 
 [node name="Drum34" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.425759, 0, -0.904837, 0, 1, 0, 0.904837, 0, -0.425759, 32.89498, 1.303041, 62.771043)
-model_name = "Barrel_01"
+transform = Transform3D(-0.425759, 0, -0.904837, 0, 1, 0, 0.904837, 0, -0.425759, 32.89498, 1.303041, 62.77104)
 power = 1.15
 
 [node name="Drum35" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.380237, 0, -0.924889, 0, 1, 0, 0.924889, 0, -0.380237, 33.333509, 1.09913, 66.032251)
+transform = Transform3D(-0.380237, 0, -0.924889, 0, 1, 0, 0.924889, 0, -0.380237, 33.333508, 1.09913, 66.03225)
 model_name = "barrel_03"
 power = 0.95
 
 [node name="Drum36" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.682143, 0, -0.731219, 0, 1, 0, 0.731219, 0, 0.682143, -42.697853, 1.603628, 61.091642)
+transform = Transform3D(0.682143, 0, -0.731219, 0, 1, 0, 0.731219, 0, 0.682143, -42.697853, 1.603628, 61.09164)
 model_name = "small_lpg_tank"
-power = 1.20
+power = 1.2
 
 [node name="Drum37" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(-0.946253, 0, 0.323426, 0, 1, 0, -0.323426, 0, -0.946253, -39.357686, 1.969803, 60.357566)
+transform = Transform3D(-0.946253, 0, 0.323426, 0, 1, 0, -0.323426, 0, -0.946253, -39.357685, 1.969803, 60.357567)
 model_name = "propane_tank"
 power = 1.35
 
 [node name="Drum38" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
-transform = Transform3D(0.924714, 0, 0.380662, 0, 1, 0, -0.380662, 0, 0.924714, -38.784695, 1.183032, 65.282685)
-model_name = "Barrel_01"
+transform = Transform3D(0.924714, 0, 0.380662, 0, 1, 0, -0.380662, 0, 0.924714, -38.784695, 1.183032, 65.282684)
 power = 1.15
 
 [node name="Survivors" type="Node3D" parent="."]
 
 [node name="WarehouseTruss" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, 44, 1.7757165, -38.120228)
+transform = Transform3D(0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, 0.766044, 41.97919, 2.5751407, -36.042484)
 pose = 2
 label = "Casualty under the collapsed warehouse truss"
 
 [node name="PancakeVoidA" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(-0.309017, 0, 0.951057, 0, 1, 0, -0.951057, 0, -0.309017, -36, 5.603407, 32.088802)
+transform = Transform3D(-0.309017, 0, 0.951057, 0, 1, 0, -0.951057, 0, -0.309017, -36, 5.634308, 32.088802)
 pose = 1
 responsive = false
 label = "Casualty in the void under the pancaked slabs"
 
 [node name="PancakeVoidB" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -40, 8.258648, 38)
+transform = Transform3D(0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, -40, 8.111481, 38)
 label = "Second casualty, same void"
 
 [node name="ContainerStack" parent="Survivors" instance=ExtResource("4_victim")]
@@ -593,7 +570,7 @@ transform = Transform3D(0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, 0.939693, -5
 label = "Casualty inside the ruptured silo"
 
 [node name="PipeRack" parent="Survivors" instance=ExtResource("4_victim")]
-transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -50.3245, 2.8802392, 18)
+transform = Transform3D(0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, 0.173648, -50.232662, 2.846267, 18)
 pose = 1
 responsive = false
 label = "Casualty beside the pipe rack"

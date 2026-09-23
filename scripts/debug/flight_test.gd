@@ -186,10 +186,11 @@ func _handling_sim() -> void:
 	await _wait(2.0)
 	_release_all()
 
-	# Nose up, then drive: it must climb along the nose, not fly flat.
-	Input.action_press("pitch_up")
+	# Stick back (inverted) raises the nose; then drive: it must climb along
+	# the nose, not fly flat.
+	Input.action_press("pitch_down")
 	await _wait(0.5)
-	Input.action_release("pitch_up")
+	Input.action_release("pitch_down")
 	var start_y := _drone.global_position.y
 	Input.action_press("throttle_up")
 	await _wait(2.5)
@@ -198,10 +199,10 @@ func _handling_sim() -> void:
 	_report("sim     flies where the nose points (nose up)", "%+.1f m climbed" % climb,
 		climb > 4.0)
 
-	# Stick up must be nose up - the not-inverted requirement.
-	_report("sim     stick up is nose up", "%.0f deg" % rad_to_deg(_drone.view_pitch()),
+	# Flight sim is inverted: stick back is nose up.
+	_report("sim     stick back is nose up (inverted)", "%.0f deg" % rad_to_deg(_drone.view_pitch()),
 		_drone.view_pitch() > 0.1)
-	Input.action_press("pitch_down")
+	Input.action_press("pitch_up")
 	await _wait(0.5)
 	_release_all()
 	Input.action_press("throttle_down")

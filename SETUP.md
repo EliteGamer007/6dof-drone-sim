@@ -68,7 +68,7 @@ Arcade flight model (the default):
 | Settings | `Esc` | — |
 
 `Esc` -> Flight model switches to **Flight sim**: point the nose with the left
-stick, RT to accelerate, LT to brake.
+stick (inverted: pull back to climb), RT to accelerate, LT to brake.
 
 ---
 

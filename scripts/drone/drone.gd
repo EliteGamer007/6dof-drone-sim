@@ -542,10 +542,10 @@ func _arcade_command(scale: float) -> Array:
 ## Flight sim: the left stick points the nose, the triggers drive along it.
 ## Returns [command, yaw_rate].
 func _sim_command(delta: float, scale: float) -> Array:
-	# Stick up is nose up and stick right is turn right. Not inverted, on
-	# purpose: this is a drone, not an aircraft yoke.
+	# Inverted pitch, like an aircraft yoke: pull the stick back (down) to
+	# raise the nose and climb, push it forward to dive. Stick right turns right.
 	var steer := _shape(Input.get_axis("roll_left", "roll_right"))
-	var pitch_in := _shape(Input.get_axis("pitch_down", "pitch_up"))
+	var pitch_in := _shape(Input.get_axis("pitch_up", "pitch_down"))
 	var rt := Input.get_action_strength("throttle_up")
 	var lt := Input.get_action_strength("throttle_down")
 	var vertical := _shape(Input.get_axis("gimbal_down", "gimbal_up"))

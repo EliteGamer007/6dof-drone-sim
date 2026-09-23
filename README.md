@@ -85,7 +85,7 @@ cannot disagree.
 
 - **Two flight models**, switchable in settings. *Arcade:* the stick is a
   velocity - it goes where you push it and stops when you let go. *Flight
-  sim:* point the nose with the left stick, RT to accelerate, LT to brake.
+  sim:* point the nose with the left stick (inverted - pull back to climb), RT to accelerate, LT to brake.
 - **Smooth at any frame rate.** The drone moves at 60 Hz physics; the screen
   draws at 144 Hz. Physics interpolation plus a camera that reads the
   interpolated position. Measured: camera speed varies <0.6% frame to frame,
@@ -136,7 +136,7 @@ Show: `03-thermal-finds-survivor.png`, `04-night-vision.png`,
 
 ### 9. The mission
 
-Five objectives: tag every survivor; identify each gas hazard; survey 55% of
+Five objectives: tag every survivor; identify each gas hazard; survey 35% of
 the zone; flag unstable structures; drop first-aid kits. Tagging is
 deliberate - the operator puts the reticle on a contact and confirms it; each
 contact can only ever be logged once. The mission ends with an after-action
@@ -265,8 +265,8 @@ stick centres. Strafe, climb and turn are independent.
 
 ### Gamepad and keyboard - FLIGHT SIM
 
-The drone has a nose. Point it, then drive along it. Stick up is nose up - not
-inverted.
+The drone has a nose. Point it, then drive along it. Pitch is **inverted**,
+like an aircraft: pull the left stick back to raise the nose, push to dive.
 
 | | Gamepad | Keyboard |
 | --- | --- | --- |
