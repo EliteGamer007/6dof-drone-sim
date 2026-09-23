@@ -174,9 +174,10 @@ but it has not yet been flown on a physical headset. See docs/TEAM.md.
 
 ### 12. Team
 
-See [docs/TEAM.md](docs/TEAM.md): Sanjeev - aircraft, flight and VR piloting;
-Vishnu - world, environment and hazard field; Tejeshwar - sensors, mission and
-interface. Roughly equal thirds of the code.
+See [docs/TEAM.md](docs/TEAM.md): Sanjeev - aircraft, flight, damage, VR
+piloting, sensors and integration; Vishnu - world, terrain, buildings,
+lighting, gas and heat hazards, assets; Tejeshwar - thermal, detection,
+mission, HUD and menus. Roughly equal thirds of the code.
 
 ### 13. Demo, in about four minutes
 

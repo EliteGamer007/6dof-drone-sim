@@ -6,13 +6,13 @@ the one who can explain it, who reviews changes to it, and who presents it.
 
 | Area | Owner | Size |
 | --- | --- | --- |
-| Aircraft, flight and VR piloting | Sanjeev | ~2,870 lines, 15 files |
-| World, environment and hazard field | Vishnu | ~3,370 lines, 33 files |
-| Sensors, mission and interface | Tejeshwar | ~3,310 lines, 15 files |
+| Aircraft, flight, damage, VR piloting, sensors and integration | Sanjeev | ~3,200 lines |
+| World, terrain, buildings, lighting, gas and heat hazards, assets | Vishnu | ~3,370 lines |
+| Thermal, detection, mission, HUD and menus | Tejeshwar | ~2,980 lines |
 
 ---
 
-## Sanjeev - aircraft, flight and VR piloting
+## Sanjeev - aircraft, flight, damage, VR piloting, sensors and integration
 
 Everything about flying the drone and what it can do.
 
@@ -28,12 +28,17 @@ Everything about flying the drone and what it can do.
 - **Fuel drums and the explosion** - the one thing the operator can do *to* the
   site.
 - **VR piloting.** The XR rig, controller mapping, haptics, comfort.
-- **Flight test** (`--flighttest`) and the input map generator.
+- **Onboard sensors.** The five-gas detector, the air-sample trail and the
+  proximity ring.
+- **Integration.** `main.gd` - assembling the drone, world, cameras, VR rig,
+  HUD and mission into one scene - plus the input map generator.
+- **Flight test** (`--flighttest`).
 
 `scripts/drone/drone.gd`, `autopilot.gd`, `damage_model.gd`, `payload_bay.gd`,
 `proximity_array.gd`, `scripts/camera/camera_rig.gd`, `scripts/xr/*`,
 `scripts/world/supply_crate.gd`, `explosion.gd`, `explosive_barrel.gd`,
-`scripts/main.gd`, `scripts/debug/flight_test.gd`, `scenes/drone.tscn`,
+`scripts/drone/gas_sensor.gd`, `gas_trail.gd`, `scripts/main.gd`,
+`scripts/debug/flight_test.gd`, `scenes/drone.tscn`,
 `tools/gen_project_godot.py`
 
 **Be ready to explain:** why the camera jittered and why interpolation fixed
@@ -43,7 +48,7 @@ shake.
 
 ---
 
-## Vishnu - world, environment and hazard field
+## Vishnu - world, terrain, buildings, lighting, gas and heat hazards, assets
 
 Everything about the place the drone flies through.
 
@@ -77,15 +82,13 @@ has to be genuinely dark.
 
 ---
 
-## Tejeshwar - sensors, mission and interface
+## Tejeshwar - thermal, detection, mission, HUD and menus
 
 Everything about what the drone sees and what the operator does with it.
 
-- **The four sensors.** EO, thermal (a radiometric temperature model of the
-  whole site, six palettes, automatic gain, shutter calibration), low-light
-  (auto-gated intensifier with IR illuminator) and the gas overlay - one
-  full-screen shader, `vision_post.gdshader`.
-- **The five-gas detector** and the air-sample trail.
+- **Thermal and the camera feeds.** EO, thermal (a radiometric temperature
+  model of the whole site, six palettes, automatic gain, shutter calibration),
+  low-light and the gas overlay - one full-screen shader, `vision_post.gdshader`.
 - **Detection and tagging.** Confidence from range, angle, line of sight and
   sensor mode; the one-finding-per-contact rule.
 - **Survivors.** The victim scene, poses, body-temperature heat model.
@@ -94,14 +97,13 @@ Everything about what the drone sees and what the operator does with it.
 - **Self-test** (`--selftest`, 155 checks).
 
 `shaders/vision_post.gdshader`, `scripts/camera/vision_post.gd`,
-`thermal_palettes.gd`, `scripts/drone/gas_sensor.gd`, `gas_trail.gd`,
-`target_detector.gd`, `scripts/world/victim.gd`, `detectable.gd`,
+`thermal_palettes.gd`, `scripts/drone/target_detector.gd`, `scripts/world/victim.gd`, `detectable.gd`,
 `hazard_beacon.gd`, `scripts/autoload/sim.gd`, `scripts/mission/*`,
 `scripts/ui/*`, `scripts/debug/self_test.gd`, `scenes/victim.tscn`
 
 **Be ready to explain:** why thermal finds a person in rubble that daylight
 cannot; what the automatic gain window does and why it is narrow; why the
-gas overlay and the detector can never disagree; how the self-test proves a
+gas overlay and the gas detector can never disagree; how the self-test proves a
 bug stays fixed.
 
 ---
