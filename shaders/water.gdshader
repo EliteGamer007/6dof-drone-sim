@@ -20,13 +20,16 @@ float wave(vec2 p, vec2 dir, float freq, float phase) {
 	return sin(dot(p, dir) * freq + phase);
 }
 
-// Two crossing swells. Enough to break up the surface; anything more is
-// invisible past thirty metres.
+// Three swells at unrelated angles and frequencies. Two alone interfere into
+// a regular diamond grid that is obvious from altitude; the third, at a ratio
+// that never repeats against the others, breaks the pattern up.
 float surface(vec2 p, float t) {
 	float a = wave(p, normalize(vec2(1.0, 0.35)), wave_scale, t * wave_speed);
 	float b = wave(p, normalize(vec2(-0.4, 1.0)), wave_scale * 1.9,
 		t * wave_speed * 1.45);
-	return a * 0.62 + b * 0.38;
+	float c = wave(p, normalize(vec2(0.83, -0.56)), wave_scale * 3.17,
+		t * wave_speed * 2.3 + 1.7);
+	return a * 0.52 + b * 0.30 + c * 0.18;
 }
 
 void vertex() {

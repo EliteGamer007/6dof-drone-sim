@@ -52,6 +52,8 @@ You should get the briefing screen. Press **Space** to launch.
 Full tables are in the main [README](README.md), and `F1` brings them up in
 game at any time.
 
+Arcade flight model (the default):
+
 | | Keyboard | Gamepad |
 | --- | --- | --- |
 | Move | `W` `A` `S` `D` | Left stick |
@@ -60,7 +62,13 @@ game at any time.
 | Thermal camera on/off | `2` or `T` | LB |
 | Camera view | `C` | RB |
 | Tag a survivor | `X` | A |
+| Return to the van | `H` | D-pad down |
+| Drop a first-aid kit | `Z` | D-pad left |
+| Detonate a fuel drum | `B` | B |
 | Settings | `Esc` | — |
+
+`Esc` -> Flight model switches to **Flight sim**: point the nose with the left
+stick, RT to accelerate, LT to brake.
 
 ---
 
@@ -127,7 +135,7 @@ godot --headless --path . -- --selftest
 
 Flies the aircraft through the whole site, exercises every sensor and every
 action that writes something out, and prints `PASS` or a list of failures.
-138 checks; it takes about 90 seconds.
+155 checks; it takes about 90 seconds.
 
 ```bash
 godot --headless --path . -- --flighttest

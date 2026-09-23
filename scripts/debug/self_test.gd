@@ -204,6 +204,7 @@ func _finish() -> void:
 	_check_launch_pad(drone)
 	_check_contact_tagging()
 	_check_damage(drone)
+	_check_survivors_not_buried()
 	_check_all_survivors_count()
 	_check_detonation()
 	_check_thermal_field()
@@ -368,6 +369,25 @@ func _check_damage(drone: Drone) -> void:
 		and not dm.is_destroyed() and drone.gravity_scale == 0.0
 		and dm.thrust_factor() == 1.0)
 	dm.enabled = false
+
+
+## Random debris must never land on a survivor. The rubble has no collision,
+## so a buried survivor still reads "clear line of sight" to the detector while
+## being invisible on screen - the check has to look at the debris itself.
+func _check_survivors_not_buried() -> void:
+	var worst := INF
+	for node in get_tree().get_nodes_in_group("detectable"):
+		if not node is Victim:
+			continue
+		var v := Vector2(node.global_position.x, node.global_position.z)
+		for mmi in _main.world.find_children("Rubble*", "MultiMeshInstance3D", true, false):
+			var mm: MultiMesh = (mmi as MultiMeshInstance3D).multimesh
+			for i in mm.instance_count:
+				var o := mm.get_instance_transform(i).origin
+				worst = minf(worst, v.distance_to(Vector2(o.x, o.z)))
+	_check("no rubble lands on a survivor",
+		worst >= WorldBuilder.SURVIVOR_CLEAR_RADIUS - 0.01,
+		"nearest piece %.1f m" % worst)
 
 
 ## The reported bug: a survivor could be tagged, and show as tagged in the

@@ -1,3 +1,4 @@
+@tool
 class_name ExplosiveBarrel
 extends Node3D
 ## A fuel or gas drum the operator can set off from the aircraft.
@@ -5,14 +6,21 @@ extends Node3D
 ## This is the one thing in the simulation the operator can *do* to the site
 ## rather than only observe, so it is deliberately a deliberate act: B, aimed,
 ## one barrel at a time. Each one detonates once and is then spent.
+##
+## Each drum is an instance of scenes/props/explosive_drum.tscn under
+## ExplosiveDrums in the main scene. It shows its model in the editor and sits
+## itself on the terrain, so a drum can be dragged anywhere.
 
 signal detonated(barrel: ExplosiveBarrel)
 
 const GROUP := "explosive"
 
-@export var model_name := "Barrel_01"
-@export var power := 1.0
-@export var scale_factor := 1.0
+@export_enum("Barrel_01", "Barrel_02", "barrel_03", "propane_tank", "small_lpg_tank")
+var model_name := "Barrel_01":
+	set(v):
+		model_name = v
+		_rebuild_body()
+@export var power := 1.0                 ## scales blast radius, light and heat
 
 var spent := false
 
@@ -20,6 +28,10 @@ var _body: Node3D
 
 
 func _ready() -> void:
+	set_notify_transform(true)
+	_rebuild_body()
+	if Engine.is_editor_hint():
+		return
 	add_to_group(GROUP)
 	# Warm drums in the afternoon sun: they show on the thermal channel before
 	# anyone sets them off, which is the cue that they are worth avoiding.
@@ -27,13 +39,27 @@ func _ready() -> void:
 		Vector3(0.0, 0.85, 0.0), 0.34, 4.5, false, 0.2, Hazards.HeatKind.GENERIC)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSFORM_CHANGED and Engine.is_editor_hint():
+		_rebuild_body.call_deferred()
+
+
 func _exit_tree() -> void:
-	Hazards.unregister(self)
+	if not Engine.is_editor_hint():
+		Hazards.unregister(self)
 
 
-func attach_body(body: Node3D) -> void:
-	_body = body
-	add_child(body)
+## The model, seated on the ground under the drum. Never saved into the scene.
+func _rebuild_body() -> void:
+	if not is_inside_tree() or spent:
+		return
+	if _body and is_instance_valid(_body):
+		remove_child(_body)
+		_body.queue_free()
+	var g := Terrain.height(global_position.x, global_position.z) - global_position.y
+	_body = BuildKit.model(self, model_name, Vector3(0.0, g, 0.0), 0.0, 1.0, true)
+	if _body:
+		_body.set_meta(&"generated", true)
 
 
 ## Sets the barrel off. Safe to call twice - the second call does nothing,
@@ -55,7 +81,8 @@ func detonate() -> void:
 	# Same parent as the barrel, so the barrel's local position is the right
 	# one. Placed before it enters the tree: set afterwards, the interpolated
 	# first frame would streak in from the parent's origin.
-	blast.position = position
+	blast.position = position + Vector3.UP * (
+		Terrain.height(global_position.x, global_position.z) - global_position.y)
 	# Parented to the world rather than to the barrel, so the barrel can go
 	# away while the fire it started keeps burning.
 	get_parent().add_child(blast)

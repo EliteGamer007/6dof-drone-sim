@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/pieces/emergency_vehicle.gd" id="1"]
+
+[node name="FireAppliance" type="Node3D"]
+script = ExtResource("1")
+length = 7.2
+width = 2.4
+body_height = 2.1
+shell_colour = Color(0.62, 0.1, 0.09, 1)
+livery_colour = Color(0.8, 0.12, 0.1, 1)
+bar_colours = PackedColorArray(1, 0.16, 0.14, 1, 1, 0.16, 0.14, 1)
+ladder = true
+engine_heat = 41.0

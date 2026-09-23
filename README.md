@@ -11,6 +11,203 @@ event.
 
 ---
 
+## Presentation brief
+
+Everything whoever builds the slides needs: what the project is, what it is
+built with, and what to show - in slide order, with the numbers to quote.
+Screenshots referenced below are in `docs/screenshots/`. Who owns which part is
+in [docs/TEAM.md](docs/TEAM.md).
+
+### 1. Title
+
+**Beirut Port SAR Drone Simulator** - a search-and-rescue drone simulation,
+flat screen and VR, built in Godot 4.5.
+
+### 2. The problem
+
+On 4 August 2020, 2,750 tonnes of ammonium nitrate detonated at the Port of
+Beirut. In the first hours after a blast like that, nobody can safely walk into
+the site. The collapse is unstable, the air may be toxic or explosive, and
+fires are still burning. Someone has to find out where the survivors are, what
+is in the air, and what is about to fall - before rescuers go in.
+
+That is the job a survey drone does, and it is the job this simulator trains.
+
+### 3. What we built
+
+A drone flight simulator set in a reconstructed, post-blast port, with the
+sensor payload a real search drone carries. The operator flies in, finds and
+tags six survivors, identifies the gas hazards, flags unstable structures,
+surveys the zone, and drops first-aid kits - then brings the aircraft home.
+
+Show: `02-site-overview.png`, `01-launch-from-the-van.png`
+
+### 4. Technology
+
+| | |
+| --- | --- |
+| Engine | **Godot 4.5**, Forward+ renderer |
+| Language | **GDScript** - 53 scripts, ~9,550 lines |
+| Shaders | **Godot shading language (GLSL-based)** - 4 shaders: all four sensor modes in one post-process, water, terrain, VR comfort vignette |
+| VR | **OpenXR** - Quest and Index-class headsets, tethered PCVR |
+| 3D assets | **Poly Haven** (CC0): 39 models, 13 PBR material sets, 3 HDRI skies; DJI FPV airframe model |
+| Audio | 17 sounds, **synthesised from scratch** in Python - no sample libraries |
+| Tooling | **Python** - asset fetcher, audio synthesis, input-map generator, scene layout |
+| Testing | Two automated harnesses that run headless: a 155-check self-test and a flight test |
+| Version control | **Git / GitHub** - clone and run, every asset included |
+
+### 5. Architecture
+
+```
+            Sim (autoload)          Hazards (autoload)
+      state, findings, settings     the physical world: gas plumes,
+                |                   heat sources, wind, turbulence
+                |                          |
+    +-----------+-----------+   +----------+-----------+
+    |                       |   |                      |
+  Drone                   HUD & menus            Sensor post-process
+  flight models,          objectives,            EO / thermal / NV / gas
+  autopilot, payload,     report, settings       (one shader, reads the
+  damage, sensors                                 same field as the detector)
+    |
+  Camera rig / VR rig  ----- interpolated transform, every frame
+
+  World: terrain function  +  editable scene pieces (buildings, vehicles,
+         hazards, survivors) placed in scenes/main.tscn
+```
+
+The design point to make: **there is one hazard field.** The thermal image,
+the gas overlay, the five-gas detector readings and the damage the aircraft
+takes from fire all come from the same model. The picture and the numbers
+cannot disagree.
+
+### 6. The aircraft
+
+- **Two flight models**, switchable in settings. *Arcade:* the stick is a
+  velocity - it goes where you push it and stops when you let go. *Flight
+  sim:* point the nose with the left stick, RT to accelerate, LT to brake.
+- **Smooth at any frame rate.** The drone moves at 60 Hz physics; the screen
+  draws at 144 Hz. Physics interpolation plus a camera that reads the
+  interpolated position. Measured: camera speed varies <0.6% frame to frame,
+  zero stalled frames. Without it: 55% of frames frozen. *This before/after is
+  worth its own slide.*
+- **Three cameras:** chase, close-follow, FPV nose cam.
+- **Autopilot:** return-to-home lands on the van from 75 m within 0.08 m;
+  orbit circles a survivor holding its radius to 0.01 m.
+- **Payload:** four first-aid kits, dropped under a parachute, credited to the
+  survivor they land beside.
+- **Damage:** impacts, blasts and fire cost integrity and motor power; the
+  airframe wobbles and slows; at zero it falls and a spare launches.
+
+Show: `06-fpv-nose-cam.png`
+
+### 7. The sensors
+
+| Mode | What it shows | Why it matters |
+| --- | --- | --- |
+| **EO** | the daylight camera | structure - but a grey person in grey rubble is invisible |
+| **Thermal** | a radiometric temperature model of the entire site: sun-warmed walls, sky-cooled ground, residual heat in the crater, cold water | body heat against cooling rubble: this is what finds people |
+| **Low-light** | an auto-gated image intensifier with an IR illuminator | voids, and anything after dark |
+| **Gas overlay** | invisible gas plumes, painted in false colour | lets the pilot fly *around* a cloud instead of through it |
+
+Plus a **five-gas detector** - CO, H2S, NO2, combustible gas and oxygen - with
+two-stage alarms at occupational exposure levels (CO 35 / 100 ppm, H2S 10 /
+15 ppm, NO2 1 / 5 ppm, flammable 10 / 20 % LEL, O2 below 19.5 %).
+
+Show: `03-thermal-finds-survivor.png`, `04-night-vision.png`,
+`05-gas-overlay.png`
+
+### 8. The site
+
+- A procedural terrain with the blast crater at its centre.
+- The grain silos, a warehouse, a pancaked building, a container yard, a pipe
+  corridor, a collapsed quay crane, the harbour - and thirteen ruined city
+  blocks on a collapse slider, from intact shell to flattened.
+- A response: the van the drone launches from, an ambulance, a fire engine, a
+  casualty collection point, and a coned access route with the wall panel that
+  blocks it.
+- 6 survivors, 6 named gas leaks across 5 gases, 3 fires, 48 background gas
+  sources, 38 fuel drums that can be detonated.
+- Four times of day and three graphics presets. Night is genuinely dark: the
+  site lights come on and the other sensors earn their place.
+- **Every piece is its own scene.** Open `main.tscn` in Godot and the whole
+  site is in the scene tree - drag a building and it re-seats itself on the
+  terrain. 23 scenes, 119 placed nodes.
+
+### 9. The mission
+
+Five objectives: tag every survivor; identify each gas hazard; survey 55% of
+the zone; flag unstable structures; drop first-aid kits. Tagging is
+deliberate - the operator puts the reticle on a contact and confirms it; each
+contact can only ever be logged once. The mission ends with an after-action
+report exportable to CSV, with GPS coordinates for every finding.
+
+### 10. VR
+
+Full OpenXR support. The operator's head is the camera gimbal: look at a
+survivor and pull the trigger to tag them. The gas readout is on a wrist
+display. Controller buttons use only inputs every runtime delivers, haptics
+replace camera shake (shaking a headset view makes people ill), and a crash
+freezes the view rather than spinning it.
+
+Show: `08-vr-cockpit.png`
+
+*Be accurate on this slide:* the VR rig builds and passes the full self-test,
+but it has not yet been flown on a physical headset. See docs/TEAM.md.
+
+### 11. Engineering
+
+- **Automated testing.** `--selftest` flies the aircraft through the whole site
+  and makes 155 checks - sensors, gas readings, thermal field, survivor
+  tagging, damage, day/night, graphics presets. `--flighttest` measures
+  handling, camera smoothness in every view, and the autopilot. Both run
+  headless in about 90 seconds and print PASS or exactly what failed.
+- **Bugs stay fixed.** The worst bugs we found each have a test guarding them:
+  the survivor counter that stuck at 5/6 (the test reproduced it before the
+  fix), duplicate tagging of one survivor, and the camera jitter - where the
+  test keeps a no-interpolation run as a control, so the fix is measured
+  against the original problem every time.
+- **Performance.** Skyline in one draw call, 900 rubble pieces in three, 100
+  route cones in one; lights that only exist after dark; graphics presets down
+  to integrated GPUs.
+- **Reproducible.** Clone, open, press F5. No download step, no configuration.
+
+### 12. Team
+
+See [docs/TEAM.md](docs/TEAM.md): Sanjeev - aircraft, flight and VR piloting;
+Vishnu - world, environment and hazard field; Tejeshwar - sensors, mission and
+interface. Roughly equal thirds of the code.
+
+### 13. Demo, in about four minutes
+
+1. Briefing screen - the scenario in one breath.
+2. Launch from the van in **chase view**. Strafe and climb to show it is smooth.
+3. **RB to FPV**, fly over the crater.
+4. **LB to thermal** near the warehouse: the trapped survivor appears in
+   rubble that was empty in daylight. **A to tag.** The objective counts.
+5. **Y to the gas overlay** over the pipe corridor: the LPG cloud becomes
+   visible. The detector alarms.
+6. **Orbit** the survivor (R3), then **drop a first-aid kit** (D-pad left).
+7. **B to detonate** a fuel drum at a safe distance - show it on thermal too.
+8. **Esc, time of day to Night**, switch to low-light.
+9. **Return home** (D-pad down): the aircraft flies itself back and lands on
+   the van.
+10. Tab: the after-action report.
+
+### 14. Limitations and next steps
+
+Say these before anyone asks.
+
+- The scenario is a teaching reconstruction, not a survey of the real site.
+- VR has not yet been tested on a headset.
+- The gas model is an analytic plume, not computational fluid dynamics.
+- The flight models are commanded-velocity, chosen for a demo that anyone can
+  fly - not a rotor-thrust simulation.
+- Next: multiple drones sharing one map; a real terrain scan of the site;
+  a scored training mode with time targets.
+
+---
+
 ## Running it
 
 **New here? Read [SETUP.md](SETUP.md).** Clone, open `project.godot` in
@@ -49,78 +246,90 @@ Tested against `Godot_v4.5-stable_win64`, Forward+ renderer, on an RTX 4060.
 
 ## Controls
 
-### VR (OpenXR, tested mapping for Quest / Index-style controllers)
+Two flight models, switched in **Esc -> Flight model**. Arcade is the default
+and the one to demo with; flight sim is there for anyone who wants to fly it
+like an aircraft.
 
-| Action | Control |
-| --- | --- |
-| Throttle / yaw | Left stick |
-| Pitch / roll | Right stick |
-| Precision (slow) mode | Left trigger |
-| Tag the contact you are looking at | Right trigger |
-| Cycle sensor mode | Right A |
-| Capture evidence still | Right B |
-| Thermal camera on / off | Left X |
-| Spotlight | Left Y |
-| Thermal palette | Left grip |
-| Cycle camera view (chase / close / FPV) | Right grip |
-| Reset aircraft | Right menu |
-| Report / settings | Left menu |
+### Gamepad and keyboard - ARCADE
 
-Your head is the gimbal — look wherever you want, the aircraft does not care.
-The gas readout is on your **left wrist**; turn your hand over to read it.
-
-### Flat (keyboard / gamepad)
-
-The drone flies where you point it and stops when you let go, but it has weight:
-it accelerates up to speed rather than snapping to it, brakes harder than it
-accelerates, and banks by however much specific force it is pulling. Nothing
-drifts on its own in any axis.
+The stick is a velocity: the drone goes where it is pushed and stops when the
+stick centres. Strafe, climb and turn are independent.
 
 | | Gamepad | Keyboard |
 | --- | --- | --- |
-| Forward / back | Left stick up / down | `W` `S` |
-| Strafe | Left stick left / right | `A` `D` |
+| Forward / back, strafe | Left stick | `W` `A` `S` `D` |
 | Up / down | RT / LT | `Space` / `Shift` |
-| Turn | Right stick | `Q` `E` or arrow keys |
-| Slow mode | L3 | `Ctrl` |
-| **Thermal camera on / off** | **LB** | **`2`** or **`T`** |
-| **Camera view** | **RB** (or Back) | **`C`** |
-| Cycle sensor mode | Y | `V` |
-| Sensor direct | — | `1` EO, `3` night, `4` gas |
-| Thermal palette (6 LUTs, white hot default) | — | `B` |
-| Gimbal tilt / centre | Right stick Y | `R` `F` / `G` |
-| Tag contact | A | `X` |
+| Turn | Right stick X | `Q` `E` or arrows |
+| Camera tilt | Right stick Y | `R` / `F`, `G` centres |
+
+### Gamepad and keyboard - FLIGHT SIM
+
+The drone has a nose. Point it, then drive along it. Stick up is nose up - not
+inverted.
+
+| | Gamepad | Keyboard |
+| --- | --- | --- |
+| Point the nose (pitch / turn) | Left stick | `W` `A` `S` `D` |
+| Accelerate / brake | RT / LT | `Space` / `Shift` |
+| Climb / descend directly | Right stick Y | `R` / `F` |
+| Slide sideways | Right stick X | `Q` / `E` |
+
+Release the trigger and it coasts down to a hover rather than stopping dead.
+
+### Everything else (both models)
+
+| | Gamepad | Keyboard |
+| --- | --- | --- |
+| **Thermal on / off** | **LB** | **`2`** or **`T`** |
+| **Camera: chase / close / FPV** | **RB** | **`C`** |
+| Cycle sensor (EO / thermal / NV / gas) | Y | `V` |
+| Tag what the reticle is on | A | `X` |
 | Photo | X | `P` |
+| **Detonate a fuel drum** | **B** | **`B`** |
+| **Return to the van (autopilot)** | **D-pad down** | **`H`** |
+| **Orbit the contact (autopilot)** | **R3** | **`J`** |
+| **Drop a first-aid kit** | **D-pad left** | **`Z`** |
 | Spotlight | D-pad up | `L` |
-| Air-sample trail | — | `K` |
-| Report | — | `Tab` |
+| Slow (precision) | L3 | `Ctrl` |
 | Reset to the van | Start | `Backspace` |
-| Controls / settings | — | `F1` / `Esc` |
+| Thermal palette | - | `M` |
+| Help / settings / report | - / - / - | `F1` / `Esc` / `Tab` |
+
+### VR (Quest / Index-style controllers)
+
+Mode-2 drone layout: left stick throttle and yaw, right stick pitch and roll.
+Your head is the gimbal, and tagging, orbiting and detonating all act on what
+you are looking at.
+
+| | Right hand | Left hand |
+| --- | --- | --- |
+| Trigger | Tag what you are looking at | Precision (slow) |
+| Grip | Spotlight | Detonate the drum you look at |
+| A / X | Cycle sensor | Thermal on / off |
+| B / Y | Drop first-aid kit | Return to the van |
+| Stick click | Orbit the contact | Photo |
+| Menu | - | Settings (flight model, reset, time of day) |
+
+The gas readout is on your **left wrist**; turn your hand over to read it.
+Nothing is mapped to the right-hand menu button: on a Quest that is the system
+button and is never delivered to applications.
+
+**VR status:** the full VR rig builds and runs the complete self-test
+(`--selftest --force-xr-rig`), and the mapping above uses only inputs every
+OpenXR runtime reports. It has not yet been flown on a physical headset - do
+that before any VR demo; see docs/TEAM.md.
 
 ### The three camera views
 
-RB on the pad, `C` on the keyboard, cycling in this order:
-
 | View | What it is for |
 | --- | --- |
-| **Chase** | The default following shot. Backs off as speed builds. |
-| **Close follow** | Tight over-the-shoulder. The airframe reads clearly — this is the one to fly in when you want to *see* the drone. |
-| **FPV nose cam** | Bolted to the nose, 104° lens, inherits the airframe's lean and a small throttle-dependent frame vibration. Accelerating drops the horizon and braking lifts it. |
+| **Chase** | The default following shot. Swings round behind a turn. |
+| **Close follow** | Tight over-the-shoulder. The one to fly in to *see* the drone. |
+| **FPV nose cam** | 104 deg lens on the nose, inheriting the airframe's lean. |
 
-Chase and close both hang off a spring arm, so a wall between the camera and the
-aircraft pulls the camera in instead of clipping through it.
-
-### Launch and recovery
-
-The drone starts on the roof deck of the response van parked in the staging
-area. The deck is a real collision surface with a marked touchdown circle, the
-ground inside the cordon is kept clear of debris, and `Backspace` puts the
-aircraft back on the deck from anywhere.
-
-Editing: open `scenes/main.tscn`. The `Drone` node is `scenes/drone.tscn` (your
-DJI model is its `Airframe` child). The terrain, structures, van and props are
-built by `scripts/world/world_builder.gd` and are previewed in the editor
-viewport.
+Chase and close cast their own ray back from the drone, so a wall between the
+camera and the aircraft pulls the camera in instead of clipping through it. In
+VR the headset replaces all three.
 
 ---
 
@@ -266,23 +475,67 @@ problem is. That is handled in five places:
 
 ## Flight model
 
-One mode, tuned for a demo somebody has to be able to pick up and fly:
+Both models command a velocity on top of a rigid body, so walls stop the
+aircraft and neither can drift: no input is a zero command, and the body is
+brought to rest.
 
-- The sticks command a velocity, and the aircraft accelerates onto it at a
-  finite rate (12 m/s² up, 16 m/s² braking) rather than being teleported onto
-  it. That is the whole difference between "arcade" and "has weight".
-- Yaw rate ramps in and out instead of stepping, so a turn starts and finishes
-  smoothly.
-- Bank angle comes from specific force — the airframe tilts by the angle whose
-  horizontal thrust component produces the acceleration it is actually pulling,
-  plus a standing tilt to hold against drag at speed. It is animation only: the
-  collision body stays level, so a lean can never tip the aircraft or push it
-  off course.
-- Sideways flight is deliberately slower than forward flight.
-- Nothing drifts. Release the sticks and it stops and stays stopped.
+| | Arcade | Flight sim |
+| --- | --- | --- |
+| Top speed | 12 m/s, strafe equal to forward | 18 m/s along the nose |
+| Time to 90% speed | 0.46 s | 2.2 s |
+| Stopping | 2.6 m from cruise | 8.7 m braking from 16 m/s |
+| On release | stops | coasts |
 
-Verify it with `--flighttest`, which measures hands-off drift, sustained
-forward speed and stopping distance.
+Numbers from `--flighttest`, which re-measures all of them on every run.
+
+**Why it is smooth.** The aircraft moves at the 60 Hz physics rate and the
+screen draws faster - 144 Hz on a gaming laptop, 72-120 Hz in a headset. A
+camera reading the raw body position stands still for a frame, then jumps:
+invisible flying forward, obvious on a strafe or a climb, where the motion runs
+across the frame. Physics interpolation is on, every camera (and the VR rig)
+reads the *interpolated* transform, and the chase rig holds translation rigid
+and eases only the yaw of the shot. `--flighttest` samples the camera every
+rendered frame at 144 Hz for every view in both models: frame-to-frame speed
+varies by under 0.6% with no stalled frames. The same test with interpolation
+off, kept as the control, shows 55% of frames frozen.
+
+**Landing assist.** The last couple of metres of any descent are flown at a
+touchdown rate, the way a real flight controller does, so a landing is never
+scored as a crash.
+
+---
+
+## Autopilot, payload and damage
+
+**Return to the van** (`H`, D-pad down). Climbs to 20 m above the staging area,
+flies straight back, and lands on the deck facing the way it launched - 0.08 m
+from the centre from 75 m out. Landing repairs the airframe and reloads the
+kits.
+
+**Orbit** (`J`, R3). Circles whatever contact the reticle is on, at the radius
+it was engaged from, nose and gimbal held on the target: the standard way to
+inspect a find from every side. Holds radius to 0.01 m.
+
+Both hand control straight back the moment a stick is touched, and a banner
+across the top says so while they are flying.
+
+**First-aid kits** (`Z`, D-pad left). Four aboard. Each falls under a drogue
+chute, drifts with the wind, lands with green marker smoke, and is credited to
+any survivor within 6 m - which is the fifth objective.
+
+**Damage.** A sub-kilogram quad is fragile - props shatter on contact - and it flies like it:
+
+| | |
+| --- | --- |
+| Impact under 1.6 m/s | free - brushing a wall |
+| Harder impacts | integrity loss rising steeply with speed; above 3 m/s a prop strike costs a motor |
+| Detonation within 16 m | overpressure damage and a shove away from the blast |
+| Flying through a flame column | heat damage, from the same field the thermal camera draws |
+| Lost thrust | top speed and climb come down with it; uneven motors make the airframe wobble |
+| 0% | motors cut, it falls, and a spare launches from the van three seconds later |
+
+Grey smoke trails from the airframe below 45%, so its state is visible from the
+chase camera. Landing on the van repairs it.
 
 ---
 
@@ -303,28 +556,60 @@ it.
 
 ## Project layout
 
+Open `scenes/main.tscn` and every piece of the site is there in the scene tree,
+as its own scene - drag any of it and it re-seats itself on the terrain:
+
 ```
-scenes/main.tscn         World + Drone; the rest of the site is built in code
-scenes/drone.tscn        the aircraft, with the DJI model as its Airframe child
-scripts/
-  autoload/              Sim (state, findings, settings), Hazards (the physical
-                         gas/heat field), Sfx
-  drone/                 flight model, gas sensor, proximity ring, detector
-  camera/                flat camera rig, payload post-process
-  xr/                    OpenXR rig, controller-to-InputMap bridge
-  world/                 terrain, structures, hazards, victims, beacons, VFX
-  mission/               objectives, survey coverage, report
-  ui/                    HUD, wrist panel, briefing and settings
-shaders/                 vision_post, terrain, comfort_vignette
-tools/                   asset fetcher, audio synthesis, project.godot generator
-assets/team/             drop-in point for the rest of the team's models
+Main
+  World            terrain, sky, lighting, skyline, rubble field (generated)
+  Drone            scenes/drone.tscn - airframe, sensors, autopilot, payload bay
+  StagingArea      ResponseVan (the launch pad), WindMast, Cordon, Kit
+  Response         CasualtyPoint, Ambulance, FireAppliance, AccessRoute
+  Site             GrainSilos, Warehouse, CollapsedBlock, ContainerYard,
+                   PipeCorridor, CollapsedCrane, Harbour
+  City             thirteen RuinedBuildings - drag the Collapse slider and
+                   they fall down in the editor
+  Hazards          GasLeaks, Fires, Structural, Signs
+  ExplosiveDrums   38 drums
+  Survivors        six scenes/victim.tscn instances
 ```
 
-Most of the site is constructed in code rather than authored as `.tscn` files.
-That is
-deliberate: the rotor positions, sensor mounts and hazard field all have to stay
-consistent with the flight model, and keeping them in one place means they
-cannot drift apart.
+```
+scenes/
+  drone.tscn, victim.tscn
+  staging/         response van, ambulance, fire appliance, casualty point,
+                   access route, wind mast
+  structures/      silos, warehouse, collapsed block, container yard, pipe
+                   corridor, crane, harbour, ruined building
+  hazards/         fire, gas leak, structural hazard
+  props/           prop model (any Poly Haven asset), hazard sign, explosive drum
+scripts/
+  autoload/        Sim (state, findings, settings), Hazards (the physical
+                   gas/heat field), Sfx
+  drone/           flight models, autopilot, payload bay, damage, gas sensor,
+                   proximity ring, detector
+  camera/          flat camera rig, payload post-process, thermal palettes
+  xr/              OpenXR rig, controller-to-InputMap bridge
+  world/           terrain, build kit, world builder, hazards, victims, VFX
+  world/pieces/    the script behind every placeable scene
+  mission/         objectives, survey coverage, report
+  ui/              HUD, wrist panel, briefing and settings
+  debug/           --selftest and --flighttest
+shaders/           vision_post (all four sensors), water, terrain, vignette
+tools/             project.godot generator, main scene layout, asset fetcher,
+                   audio synthesis
+```
+
+Every placeable piece extends `SitePiece`: it builds its geometry from code in
+the editor as well as the game, and tags what it builds so none of it is
+written back into the scene file - `main.tscn` stores where each piece is and
+how it is set up, not thousands of slabs. Pieces ask `Terrain.height()` where
+the ground is, the same pure function the terrain mesh is built from, so the
+mesh and everything standing on it can never disagree.
+
+`tools/gen_main_scene.py` laid out the initial `main.tscn`. It is not needed
+any more - the scene file is the source of truth now - and re-running it would
+overwrite hand edits (except Survivors, which it always carries over).
 
 `project.godot` is generated by `tools/gen_project_godot.py` — edit that script
 rather than the file, or your input map will be overwritten next time the VR

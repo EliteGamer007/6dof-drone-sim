@@ -37,6 +37,7 @@ var _warned_half := false
 var _warned_critical := false
 var _smoke: GPUParticles3D
 var _fire_timer := 0.0
+var _last_heat_warning := -INF
 
 
 func _ready() -> void:
@@ -173,7 +174,10 @@ func _fire_exposure(delta: float) -> void:
 	if temp > 120.0:
 		var severity := clampf((temp - 120.0) / 300.0, 0.0, 1.0)
 		_apply(FIRE_DAMAGE_RATE * severity * step, "HEAT DAMAGE")
-		if randf() < 0.3:
+		# One warning every few seconds, not one per sample - it used to fire on
+		# a coin toss five times a second and flood the toast list.
+		if Sim.mission_time - _last_heat_warning > 3.0:
+			_last_heat_warning = Sim.mission_time
 			Sim.toast.emit("TOO HOT - %d C AT THE AIRFRAME" % int(temp),
 				Sim.Severity.WARNING)
 

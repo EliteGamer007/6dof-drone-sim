@@ -1,19 +1,570 @@
-[gd_scene load_steps=5 format=3 uid="uid://ekvakpcg0gvd"]
+[gd_scene load_steps=25 format=3 uid="uid://ekvakpcg0gvd"]
 
 [ext_resource type="Script" uid="uid://bjy2f1ifkcc4u" path="res://scripts/main.gd" id="1_main"]
-[ext_resource type="Script" uid="uid://duglwn6k0tj48" path="res://scripts/world/world_builder.gd" id="2_world"]
+[ext_resource type="Script" uid="uid://duglwn6k0tj48" path="res://scripts/world/world_builder.gd" id="2_world_builder"]
 [ext_resource type="PackedScene" path="res://scenes/drone.tscn" id="3_drone"]
 [ext_resource type="PackedScene" uid="uid://du6du8gxr75hc" path="res://scenes/victim.tscn" id="4_victim"]
+[ext_resource type="PackedScene" path="res://scenes/staging/response_van.tscn" id="5_response_van"]
+[ext_resource type="PackedScene" path="res://scenes/staging/wind_mast.tscn" id="6_wind_mast"]
+[ext_resource type="PackedScene" path="res://scenes/props/prop_model.tscn" id="7_prop_model"]
+[ext_resource type="PackedScene" path="res://scenes/staging/casualty_point.tscn" id="8_casualty_point"]
+[ext_resource type="PackedScene" path="res://scenes/staging/ambulance.tscn" id="9_ambulance"]
+[ext_resource type="PackedScene" path="res://scenes/staging/fire_appliance.tscn" id="10_fire_appliance"]
+[ext_resource type="PackedScene" path="res://scenes/staging/access_route.tscn" id="11_access_route"]
+[ext_resource type="PackedScene" path="res://scenes/structures/grain_silos.tscn" id="12_grain_silos"]
+[ext_resource type="PackedScene" path="res://scenes/structures/warehouse.tscn" id="13_warehouse"]
+[ext_resource type="PackedScene" path="res://scenes/structures/collapsed_block.tscn" id="14_collapsed_block"]
+[ext_resource type="PackedScene" path="res://scenes/structures/container_yard.tscn" id="15_container_yard"]
+[ext_resource type="PackedScene" path="res://scenes/structures/pipe_corridor.tscn" id="16_pipe_corridor"]
+[ext_resource type="PackedScene" path="res://scenes/structures/collapsed_crane.tscn" id="17_collapsed_crane"]
+[ext_resource type="PackedScene" path="res://scenes/structures/harbour.tscn" id="18_harbour"]
+[ext_resource type="PackedScene" path="res://scenes/structures/ruined_building.tscn" id="19_ruined_building"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/gas_leak.tscn" id="20_gas_leak"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/fire.tscn" id="21_fire"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/structural_hazard.tscn" id="22_structural_hazard"]
+[ext_resource type="PackedScene" path="res://scenes/props/hazard_sign.tscn" id="23_hazard_sign"]
+[ext_resource type="PackedScene" path="res://scenes/props/explosive_drum.tscn" id="24_explosive_drum"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
 
 [node name="World" type="Node3D" parent="."]
-script = ExtResource("2_world")
+script = ExtResource("2_world_builder")
 place_victims = false
 
 [node name="Drone" parent="." instance=ExtResource("3_drone")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 96)
+
+[node name="StagingArea" type="Node3D" parent="."]
+
+[node name="ResponseVan" parent="StagingArea" instance=ExtResource("5_response_van")]
+transform = Transform3D(0.990268, 0, 0.139173, 0, 1, 0, -0.139173, 0, 0.990268, 0, 0.310268, 96)
+
+[node name="WindMast" parent="StagingArea" instance=ExtResource("6_wind_mast")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.413508, 84)
+
+[node name="Cordon" type="Node3D" parent="StagingArea"]
+
+[node name="Barrier1" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.882948, 0, 0.469472, 0, 1, 0, -0.469472, 0, 0.882948, -7.505055, 0.108403, 99.990508)
+model_name = "concrete_road_barrier"
+
+[node name="Barrier2" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.559193, 0, 0.829038, 0, 1, 0, -0.829038, 0, 0.559193, -4.75314, 0.092025, 103.046819)
+model_name = "concrete_road_barrier"
+
+[node name="Barrier3" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.559193, 0, 0.829038, 0, 1, 0, -0.829038, 0, -0.559193, 4.75314, 0.121643, 103.046819)
+model_name = "concrete_road_barrier"
+
+[node name="Barrier4" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.882948, 0, 0.469472, 0, 1, 0, -0.469472, 0, -0.882948, 7.505055, 0.171586, 99.990508)
+model_name = "concrete_road_barrier"
+
+[node name="Barrier5" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.882948, 0, -0.469472, 0, 1, 0, 0.469472, 0, -0.882948, 7.505055, 0.3483, 92.009492)
+model_name = "concrete_road_barrier"
+
+[node name="Barrier6" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.469472, 0, -0.882948, 0, 1, 0, 0.882948, 0, -0.469472, 3.990508, 0.351276, 88.494945)
+model_name = "concrete_road_barrier"
+
+[node name="Barrier7" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.469472, 0, -0.882948, 0, 1, 0, 0.882948, 0, 0.469472, -3.990508, 0.38235, 88.494945)
+model_name = "concrete_road_barrier"
+
+[node name="Barrier8" parent="StagingArea/Cordon" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.882948, 0, -0.469472, 0, 1, 0, 0.469472, 0, 0.882948, -7.505055, 0.313714, 92.009492)
+model_name = "concrete_road_barrier"
+
+[node name="Kit" type="Node3D" parent="StagingArea"]
+
+[node name="PortableSearchlight" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.743145, 0, 0.669131, 0, 1, 0, -0.669131, 0, 0.743145, -4.2, 0.3377, 93.2)
+model_name = "portable_searchlight"
+
+[node name="PortableGenerator" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.173648, 0, 0.984808, 0, 1, 0, -0.984808, 0, -0.173648, -5, 0.306155, 95.4)
+model_name = "portable_generator"
+
+[node name="WoodenCrate" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.951057, 0, 0.309017, 0, 1, 0, -0.309017, 0, 0.951057, 4.4, 0.319545, 94)
+model_name = "wooden_crate_01"
+
+[node name="PlasticCrate" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.939693, 0, -0.34202, 0, 1, 0, 0.34202, 0, -0.939693, 4.9, 0.320577, 95.6)
+model_name = "plastic_crate_01"
+
+[node name="MetalToolbox" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.309017, 0, 0.951057, 0, 1, 0, -0.951057, 0, 0.309017, 3.9, 0.315203, 96.8)
+model_name = "metal_toolbox"
+
+[node name="ToolCart" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.766044, 0, 0.642788, 0, 1, 0, -0.642788, 0, -0.766044, -4.6, 0.260515, 99)
+model_name = "tool_cart"
+
+[node name="StreetLamp" parent="StagingArea/Kit" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.951057, 0, 0.309017, 0, 1, 0, -0.309017, 0, 0.951057, -11.5, -0.141864, 103)
+model_name = "street_lamp_01"
+
+[node name="Response" type="Node3D" parent="."]
+
+[node name="CasualtyPoint" parent="Response" instance=ExtResource("8_casualty_point")]
+transform = Transform3D(0.913545, 0, -0.406737, 0, 1, 0, 0.406737, 0, 0.913545, 26, 0.101946, 78)
+
+[node name="Ambulance" parent="Response" instance=ExtResource("9_ambulance")]
+transform = Transform3D(0.978148, 0, -0.207912, 0, 1, 0, 0.207912, 0, 0.978148, 18.81, 0.683721, 76.44)
+
+[node name="FireAppliance" parent="Response" instance=ExtResource("10_fire_appliance")]
+transform = Transform3D(-0.927184, 0, 0.374607, 0, 1, 0, -0.374607, 0, -0.927184, 38, 2.591344, 32)
+
+[node name="AccessRoute" parent="Response" instance=ExtResource("11_access_route")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Site" type="Node3D" parent="."]
+
+[node name="GrainSilos" parent="Site" instance=ExtResource("12_grain_silos")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -54, 2.070063, -66)
+
+[node name="Warehouse" parent="Site" instance=ExtResource("13_warehouse")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 0.364266, -34)
+
+[node name="CollapsedBlock" parent="Site" instance=ExtResource("14_collapsed_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 3.138991, 34)
+
+[node name="ContainerYard" parent="Site" instance=ExtResource("15_container_yard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 2.991077, 48)
+
+[node name="PipeCorridor" parent="Site" instance=ExtResource("16_pipe_corridor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 2.028892, 8)
+
+[node name="CollapsedCrane" parent="Site" instance=ExtResource("17_collapsed_crane")]
+transform = Transform3D(0.978148, 0, -0.207912, 0, 1, 0, 0.207912, 0, 0.978148, 38, 2.413919, 52)
+
+[node name="Harbour" parent="Site" instance=ExtResource("18_harbour")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.419751, -122)
+
+[node name="City" type="Node3D" parent="."]
+
+[node name="NorthTerrace" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(-0.614814, 0, 0.788672, 0, 1, 0, -0.788672, 0, -0.614814, -58, 0.271499, 132)
+seed = 3688
+width = 18.0
+height = 22.0
+depth = 14.0
+collapse = 0.62
+
+[node name="HarbourOffices" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(-0.937501, 0, -0.347982, 0, 1, 0, 0.347982, 0, -0.937501, -16, 0.155841, 148)
+seed = 7131
+width = 24.0
+height = 15.0
+depth = 16.0
+collapse = 0.30
+
+[node name="CornerShops" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(0.217734, 0, -0.976008, 0, 1, 0, 0.976008, 0, 0.217734, 74, -0.332971, 120)
+seed = 3803
+width = 20.0
+height = 19.0
+depth = 15.0
+collapse = 0.45
+
+[node name="SiloWestA" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(-0.328082, 0, -0.944649, 0, 1, 0, 0.944649, 0, -0.328082, -100, -0.080093, -60)
+seed = 9801
+width = 16.0
+height = 26.0
+depth = 13.0
+collapse = 0.75
+
+[node name="SiloWestB" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(-0.913462, 0, -0.406924, 0, 1, 0, 0.406924, 0, -0.913462, -96, 0.395252, -96)
+seed = 4714
+width = 15.0
+height = 17.0
+depth = 12.0
+collapse = 0.55
+
+[node name="DockOffice" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(0.900694, 0, 0.434453, 0, 1, 0, -0.434453, 0, 0.900694, 92, -0.130875, -100)
+seed = 4190
+width = 22.0
+height = 24.0
+depth = 17.0
+collapse = 0.35
+
+[node name="Terrace3" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(0.926943, 0, -0.375203, 0, 1, 0, 0.375203, 0, 0.926943, -84, 0.288606, -22)
+seed = 9441
+width = 16.0
+height = 18.0
+depth = 13.0
+collapse = 0.55
+
+[node name="Flats" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(-0.950084, 0, -0.311994, 0, 1, 0, 0.311994, 0, -0.950084, -22, 2.816121, 60)
+seed = 6977
+width = 19.0
+height = 12.0
+depth = 15.0
+collapse = 0.85
+
+[node name="Depot" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(-0.568859, 0, -0.822435, 0, 1, 0, 0.822435, 0, -0.568859, 64, 3.893355, 10)
+seed = 6701
+width = 15.0
+height = 20.0
+depth = 12.0
+collapse = 0.40
+
+[node name="Pancaked" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(-0.874702, 0, 0.484662, 0, 1, 0, -0.484662, 0, -0.874702, 26, 2.736331, -80)
+seed = 2180
+width = 18.0
+height = 9.0
+depth = 14.0
+collapse = 1.00
+
+[node name="Stores" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(0.205058, 0, -0.97875, 0, 1, 0, 0.97875, 0, 0.205058, 78, 0.095205, -68)
+seed = 7209
+width = 20.0
+height = 16.0
+depth = 16.0
+collapse = 0.70
+
+[node name="Garages" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(-0.945133, 0, 0.326687, 0, 1, 0, -0.326687, 0, -0.945133, -88, 0.166542, 58)
+seed = 5767
+width = 17.0
+height = 11.0
+depth = 13.0
+collapse = 0.95
+
+[node name="Tower" parent="City" instance=ExtResource("19_ruined_building")]
+transform = Transform3D(0.980952, 0, 0.194251, 0, 1, 0, -0.194251, 0, 0.980952, -70, 0.00022, -78)
+seed = 4947
+width = 14.0
+height = 21.0
+depth = 12.0
+collapse = 0.25
+
+[node name="Hazards" type="Node3D" parent="."]
+
+[node name="GasLeaks" type="Node3D" parent="Hazards"]
+
+[node name="LpgLeak" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 1.52723, 10)
+label = "Ruptured LPG line under the pipe rack"
+gas = 3
+strength = 78.0
+plume_radius = 3.4
+plume_length = 30.0
+visible_vapour = true
+
+[node name="Tank" parent="Hazards/GasLeaks/LpgLeak" instance=ExtResource("7_prop_model")]
+transform = Transform3D(0.111095, 0, -0.99381, 0, 1, 0, 0.99381, 0, 0.111095, 0, 0, 0)
+model_name = "small_lpg_tank"
+
+[node name="PropaneLeak" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, -0.948917, -22)
+label = "Propane cylinder venting inside the warehouse"
+gas = 3
+strength = 55.0
+plume_radius = 2.6
+plume_length = 22.0
+visible_vapour = true
+
+[node name="Tank" parent="Hazards/GasLeaks/PropaneLeak" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.95964, 0, -0.28123, 0, 1, 0, 0.28123, 0, -0.95964, 0, 0, 0)
+model_name = "propane_tank"
+
+[node name="CraterNO2" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -8.717117, -20)
+label = "Residual nitrogen dioxide over the detonation seat"
+gas = 2
+strength = 14.0
+plume_radius = 9.0
+plume_length = 46.0
+visible_vapour = true
+
+[node name="DrainageH2S" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, 4.155211, 40)
+label = "Hydrogen sulphide from the drainage void under the collapse"
+gas = 1
+strength = 34.0
+plume_radius = 4.2
+plume_length = 18.0
+visible_vapour = false
+
+[node name="ContainerYardCO" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 3.849007, 44)
+label = "Fuel fire smouldering in the container yard"
+gas = 0
+strength = 260.0
+plume_radius = 3.0
+plume_length = 26.0
+visible_vapour = false
+
+[node name="Tank" parent="Hazards/GasLeaks/ContainerYardCO" instance=ExtResource("7_prop_model")]
+transform = Transform3D(-0.875103, 0, -0.483936, 0, 1, 0, 0.483936, 0, -0.875103, 0, 0, 0)
+model_name = "metal_jerrycan"
+
+[node name="SiloO2" parent="Hazards/GasLeaks" instance=ExtResource("20_gas_leak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 3.099888, -60)
+label = "Oxygen-deficient atmosphere inside the ruptured silo"
+gas = 4
+strength = 3.8
+plume_radius = 5.0
+plume_length = 8.0
+visible_vapour = false
+
+[node name="Fires" type="Node3D" parent="Hazards"]
+
+[node name="ContainerYardFire" parent="Hazards/Fires" instance=ExtResource("21_fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3.343237, 40)
+label = "Container yard fire"
+intensity = 1.35
+
+[node name="SiloApronFire" parent="Hazards/Fires" instance=ExtResource("21_fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, -3.096603, -44)
+label = "Burning debris on the silo apron"
+intensity = 0.90
+
+[node name="WarehouseDoorFire" parent="Hazards/Fires" instance=ExtResource("21_fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 1.938601, -8)
+label = "Vehicle fire at the warehouse door"
+intensity = 0.65
+
+[node name="Structural" type="Node3D" parent="Hazards"]
+
+[node name="RupturedSiloWall" parent="Hazards/Structural" instance=ExtResource("22_structural_hazard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 6, -66)
+label = "Ruptured silo wall"
+detail = "Vertical crack running the full height of the silo shell. Any further movement drops several hundred tonnes onto the apron below, which is the only vehicle route into the site."
+recommended_action = "Exclusion zone 30 m. Survey by air only."
+
+[node name="UnsupportedSlabEdge" parent="Hazards/Structural" instance=ExtResource("22_structural_hazard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 9, 34)
+label = "Unsupported slab edge"
+detail = "The upper floor slab is cantilevered over the void with no remaining column support on its northern edge."
+recommended_action = "Prop before any rescuer enters the void beneath."
+
+[node name="DisplacedRoofTruss" parent="Hazards/Structural" instance=ExtResource("22_structural_hazard")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 8, -20)
+label = "Displaced roof truss"
+detail = "Roof truss has dropped at one end and is resting on stacked material rather than its seat."
+recommended_action = "Stabilise the truss before working under it."
+
+[node name="Signs" type="Node3D" parent="Hazards"]
+
+[node name="SiloExclusion" parent="Hazards/Signs" instance=ExtResource("23_hazard_sign")]
+transform = Transform3D(0.913545, 0, 0.406737, 0, 1, 0, -0.406737, 0, 0.913545, -44, 2.942418, -50)
+text = "Silo exclusion zone"
+board_colour = Color(0.95, 0.78, 0.1, 1)
+
+[node name="FlammableAtmosphere" parent="Hazards/Signs" instance=ExtResource("23_hazard_sign")]
+transform = Transform3D(0.374607, 0, -0.927184, 0, 1, 0, 0.927184, 0, 0.374607, -42, 1.336777, 16)
+text = "Flammable atmosphere"
+board_colour = Color(0.92, 0.2, 0.16, 1)
+
+[node name="ActiveFire" parent="Hazards/Signs" instance=ExtResource("23_hazard_sign")]
+transform = Transform3D(-0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, -0.866025, 24, 3.014219, 44)
+text = "Active fire - no entry"
+board_colour = Color(0.92, 0.2, 0.16, 1)
+
+[node name="ExplosiveDrums" type="Node3D" parent="."]
+
+[node name="Drum01" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.111213, 0, 0.993797, 0, 1, 0, -0.993797, 0, 0.111213, 35.806548, -3.533785, -23.041817)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum02" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.762579, 0, 0.646895, 0, 1, 0, -0.646895, 0, 0.762579, 37.665467, -2.921836, -24.306281)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum03" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.952769, 0, -0.303695, 0, 1, 0, 0.303695, 0, -0.952769, 36.734603, -3.39506, -22.15751)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum04" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.512389, 0, -0.858753, 0, 1, 0, 0.858753, 0, 0.512389, 35.509808, -3.355708, -25.083439)
+model_name = "barrel_03"
+power = 0.95
+
+[node name="Drum05" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.992977, 0, -0.118306, 0, 1, 0, 0.118306, 0, 0.992977, 38.659543, -2.744421, -21.453852)
+model_name = "propane_tank"
+power = 1.35
+
+[node name="Drum06" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.572069, 0, -0.820206, 0, 1, 0, 0.820206, 0, 0.572069, -32.10608, -2.699597, -31.706606)
+model_name = "barrel_03"
+power = 0.95
+
+[node name="Drum07" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.32637, 0, 0.945242, 0, 1, 0, -0.945242, 0, -0.32637, -28.704912, -3.07004, -34.981249)
+model_name = "Barrel_02"
+power = 0.95
+
+[node name="Drum08" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.955069, 0, -0.296385, 0, 1, 0, 0.296385, 0, -0.955069, -33.256194, -2.299729, -32.595011)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum09" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.015381, 0, -0.999882, 0, 1, 0, 0.999882, 0, 0.015381, -27.641123, -3.18997, -33.250721)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum10" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.518151, 0, -0.855289, 0, 1, 0, 0.855289, 0, -0.518151, 57.926582, 3.484873, 29.284853)
+model_name = "Barrel_02"
+power = 0.95
+
+[node name="Drum11" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.804892, 0, 0.593422, 0, 1, 0, -0.593422, 0, 0.804892, 53.284073, 3.852476, 28.358564)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum12" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.819365, 0, 0.573272, 0, 1, 0, -0.573272, 0, -0.819365, 57.233522, 3.569435, 29.116621)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum13" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.97315, 0, -0.230171, 0, 1, 0, 0.230171, 0, -0.97315, 56.735059, 3.794475, 27.415812)
+model_name = "Barrel_02"
+power = 0.95
+
+[node name="Drum14" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.190432, 0, -0.9817, 0, 1, 0, 0.9817, 0, 0.190432, -58.926691, 2.932369, 29.96466)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum15" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.787204, 0, 0.616693, 0, 1, 0, -0.616693, 0, 0.787204, -60.394429, 2.626161, 32.016541)
+model_name = "Barrel_02"
+power = 0.95
+
+[node name="Drum16" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.050542, 0, -0.998722, 0, 1, 0, 0.998722, 0, 0.050542, -61.466585, 3.037535, 27.430766)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum17" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.659733, 0, -0.7515, 0, 1, 0, 0.7515, 0, 0.659733, -59.068143, 2.54461, 33.256439)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum18" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.788633, 0, -0.614864, 0, 1, 0, 0.614864, 0, -0.788633, -60.788111, 2.882558, 29.26088)
+model_name = "barrel_03"
+power = 0.95
+
+[node name="Drum19" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.803057, 0, 0.595903, 0, 1, 0, -0.595903, 0, -0.803057, 8.648365, -0.468562, 32.223476)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum20" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.393058, 0, 0.919514, 0, 1, 0, -0.919514, 0, -0.393058, 14.297427, -1.674908, 29.596261)
+model_name = "Barrel_02"
+power = 0.95
+
+[node name="Drum21" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.990341, 0, -0.138651, 0, 1, 0, 0.138651, 0, -0.990341, 11.825518, -0.790867, 31.576913)
+model_name = "barrel_03"
+power = 0.95
+
+[node name="Drum22" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.984063, 0, -0.177819, 0, 1, 0, 0.177819, 0, -0.984063, -13.674769, 3.08355, -65.315451)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum23" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.337067, 0, -0.941481, 0, 1, 0, 0.941481, 0, -0.337067, -11.453382, 2.969868, -64.51503)
+model_name = "propane_tank"
+power = 1.35
+
+[node name="Drum24" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.074028, 0, -0.997256, 0, 1, 0, 0.997256, 0, 0.074028, -14.81734, 1.077551, -59.172386)
+model_name = "propane_tank"
+power = 1.35
+
+[node name="Drum25" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.356359, 0, 0.934349, 0, 1, 0, -0.934349, 0, -0.356359, -14.395228, 2.638018, -63.91381)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum26" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.032055, 0, -0.999486, 0, 1, 0, 0.999486, 0, -0.032055, 72.16532, 1.003104, -52.969276)
+model_name = "propane_tank"
+power = 1.35
+
+[node name="Drum27" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.90722, 0, 0.420657, 0, 1, 0, -0.420657, 0, 0.90722, 70.662636, 1.263618, -49.554822)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum28" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.409434, 0, -0.91234, 0, 1, 0, 0.91234, 0, 0.409434, 68.804897, 1.480559, -47.724799)
+model_name = "Barrel_02"
+power = 0.95
+
+[node name="Drum29" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.997152, 0, 0.075413, 0, 1, 0, -0.075413, 0, -0.997152, -76.21301, 1.423233, -16.784078)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum30" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.964892, 0, -0.262646, 0, 1, 0, 0.262646, 0, -0.964892, -76.943423, 1.407973, -14.020446)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum31" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.946896, 0, -0.32154, 0, 1, 0, 0.32154, 0, 0.946896, -79.666629, 1.105863, -10.960394)
+model_name = "propane_tank"
+power = 1.35
+
+[node name="Drum32" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.940526, 0, -0.339721, 0, 1, 0, 0.339721, 0, 0.940526, -75.330875, 1.444354, -11.528673)
+model_name = "barrel_03"
+power = 0.95
+
+[node name="Drum33" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.878166, 0, 0.478355, 0, 1, 0, -0.478355, 0, -0.878166, 27.161931, 1.00767, 69.079712)
+model_name = "barrel_03"
+power = 0.95
+
+[node name="Drum34" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.425759, 0, -0.904837, 0, 1, 0, 0.904837, 0, -0.425759, 32.89498, 1.303041, 62.771043)
+model_name = "Barrel_01"
+power = 1.15
+
+[node name="Drum35" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.380237, 0, -0.924889, 0, 1, 0, 0.924889, 0, -0.380237, 33.333509, 1.09913, 66.032251)
+model_name = "barrel_03"
+power = 0.95
+
+[node name="Drum36" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.682143, 0, -0.731219, 0, 1, 0, 0.731219, 0, 0.682143, -42.697853, 1.603628, 61.091642)
+model_name = "small_lpg_tank"
+power = 1.20
+
+[node name="Drum37" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(-0.946253, 0, 0.323426, 0, 1, 0, -0.323426, 0, -0.946253, -39.357686, 1.969803, 60.357566)
+model_name = "propane_tank"
+power = 1.35
+
+[node name="Drum38" parent="ExplosiveDrums" instance=ExtResource("24_explosive_drum")]
+transform = Transform3D(0.924714, 0, 0.380662, 0, 1, 0, -0.380662, 0, 0.924714, -38.784695, 1.183032, 65.282685)
+model_name = "Barrel_01"
+power = 1.15
 
 [node name="Survivors" type="Node3D" parent="."]
 

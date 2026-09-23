@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/fire_source.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/world/editor_marker.gd" id="2"]
+
+[sub_resource type="SphereMesh" id="mesh"]
+radius = 1.2
+height = 2.4
+radial_segments = 16
+rings = 8
+
+[sub_resource type="StandardMaterial3D" id="mat"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.45, 0.1, 0.55)
+
+[node name="Fire" type="Node3D"]
+script = ExtResource("1")
+
+[node name="EditorMarker" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh")
+surface_material_override/0 = SubResource("mat")
+script = ExtResource("2")

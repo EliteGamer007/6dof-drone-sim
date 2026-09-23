@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/pieces/emergency_vehicle.gd" id="1"]
+
+[node name="Ambulance" type="Node3D"]
+script = ExtResource("1")
+length = 5.2
+width = 2.05
+body_height = 1.7
+shell_colour = Color(0.9, 0.91, 0.92, 1)
+livery_colour = Color(0.85, 0.2, 0.16, 1)
