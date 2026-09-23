@@ -49,6 +49,10 @@ func _ready() -> void:
 			_heat = h
 			break
 
+	var drone := Sim.drone as Drone
+	if drone and drone.damage:
+		drone.damage.blast(global_position, power)
+
 	Sfx.play("impact", 4.0, randf_range(0.42, 0.52), 0.0)
 	Sfx.play("fire_crackle", -2.0, 0.8, 0.05)
 	Sim.camera_shake.emit(1.0 * power)

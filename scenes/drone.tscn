@@ -1,10 +1,33 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/drone/drone.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://assets/drone/dji_fpv.glb" id="2_model"]
+[ext_resource type="Script" path="res://scripts/drone/gas_sensor.gd" id="3_gas"]
+[ext_resource type="Script" path="res://scripts/drone/target_detector.gd" id="4_detector"]
+[ext_resource type="Script" path="res://scripts/drone/proximity_array.gd" id="5_proximity"]
+[ext_resource type="Script" path="res://scripts/drone/autopilot.gd" id="6_autopilot"]
+[ext_resource type="Script" path="res://scripts/drone/payload_bay.gd" id="7_payload"]
 
 [node name="Drone" type="RigidBody3D"]
 script = ExtResource("1_script")
 
 [node name="Airframe" parent="." instance=ExtResource("2_model")]
 transform = Transform3D(0.052, 0, 0, 0, 0.052, 0, 0, 0, 0.052, -0.027, -0.056, 0.039)
+
+[node name="GasSensor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.09, 0)
+script = ExtResource("3_gas")
+
+[node name="TargetDetector" type="Node3D" parent="."]
+script = ExtResource("4_detector")
+
+[node name="ProximityArray" type="Node3D" parent="."]
+script = ExtResource("5_proximity")
+
+[node name="Autopilot" type="Node" parent="."]
+script = ExtResource("6_autopilot")
+
+[node name="PayloadBay" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.14, 0.02)
+script = ExtResource("7_payload")
+capacity = 4

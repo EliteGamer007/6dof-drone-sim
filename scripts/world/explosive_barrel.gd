@@ -52,10 +52,14 @@ func detonate() -> void:
 	var blast := Explosion.new()
 	blast.name = "Explosion"
 	blast.power = power
+	# Same parent as the barrel, so the barrel's local position is the right
+	# one. Placed before it enters the tree: set afterwards, the interpolated
+	# first frame would streak in from the parent's origin.
+	blast.position = position
 	# Parented to the world rather than to the barrel, so the barrel can go
 	# away while the fire it started keeps burning.
 	get_parent().add_child(blast)
-	blast.global_position = global_position
+	blast.reset_physics_interpolation()
 
 	detonated.emit(self)
 

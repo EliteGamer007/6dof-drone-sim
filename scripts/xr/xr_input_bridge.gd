@@ -35,19 +35,30 @@ func _process(_delta: float) -> void:
 	_axis("roll_left", "roll_right", rstick.x)
 	_axis("pitch_down", "pitch_up", rstick.y)
 
-	_hold("precision_mode", left.get_float(&"trigger") > 0.55)
-
+	# Every button a Quest-class controller has that the application is allowed
+	# to use. The right-hand menu button is the system button on Quest and is
+	# never delivered to apps, so nothing important can live there - reset
+	# used to, and could never be pressed. Grips are read as analogue squeeze,
+	# which every runtime reports, rather than as a click, which some do not.
+	#
+	#   RIGHT  trigger  tag what you are looking at      A  cycle sensor
+	#          grip     spotlight                        B  drop first-aid kit
+	#          stick    orbit the contact
+	#   LEFT   trigger  precision (slow) flying          X  thermal on/off
+	#          grip     detonate the drum you look at    Y  return to the van
+	#          stick    capture evidence photo           menu  settings / pause
 	_hold("drop_marker", right.get_float(&"trigger") > 0.7)
 	_hold("vision_next", right.is_button_pressed(&"ax_button"))
-	_hold("capture_photo", right.is_button_pressed(&"by_button"))
-	_hold("switch_camera", right.is_button_pressed(&"grip_click"))
-	_hold("reset_drone", right.is_button_pressed(&"menu_button"))
+	_hold("drop_supply", right.is_button_pressed(&"by_button"))
+	_hold("toggle_spotlight", right.get_float(&"grip") > 0.6)
+	_hold("orbit_poi", right.is_button_pressed(&"primary_click"))
 
+	_hold("precision_mode", left.get_float(&"trigger") > 0.55)
 	_hold("toggle_thermal", left.is_button_pressed(&"ax_button"))
-	_hold("toggle_spotlight", left.is_button_pressed(&"by_button"))
-	_hold("thermal_palette", left.is_button_pressed(&"grip_click"))
-	_hold("toggle_trail", left.is_button_pressed(&"primary_click"))
-	_hold("toggle_report", left.is_button_pressed(&"menu_button"))
+	_hold("return_home", left.is_button_pressed(&"by_button"))
+	_hold("detonate", left.get_float(&"grip") > 0.6)
+	_hold("capture_photo", left.is_button_pressed(&"primary_click"))
+	_hold("pause_menu", left.is_button_pressed(&"menu_button"))
 
 
 func _axis(negative: String, positive: String, value: float) -> void:

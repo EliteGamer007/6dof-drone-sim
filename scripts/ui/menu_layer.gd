@@ -104,6 +104,8 @@ func _build_rows() -> void:
 		{"kind": "toggle", "key": "gas_trail", "label": "Air-sample trail",
 			"hint": "Leaves a coloured breadcrumb at every sample point"},
 		{"kind": "header", "label": "FLIGHT"},
+		{"kind": "action", "id": "flightmodel", "label": "Flight model",
+			"hint": "Arcade: stick is velocity.  Flight sim: point the nose, RT to fly, LT to brake"},
 		{"kind": "toggle", "key": "obstacle_assist", "label": "Obstacle braking assist",
 			"hint": "Slows the aircraft as it closes on an obstacle"},
 		{"kind": "slider", "key": "hud_opacity", "label": "HUD opacity",
@@ -193,6 +195,8 @@ func _adjust(step: int) -> void:
 					_cycle_quality(step)
 				"timeofday":
 					_cycle_time(step)
+				"flightmodel":
+					_cycle_flight_model()
 				_:
 					_activate()
 
@@ -215,6 +219,8 @@ func _activate() -> void:
 			_cycle_quality(1)
 		"timeofday":
 			_cycle_time(1)
+		"flightmodel":
+			_cycle_flight_model()
 		"quit":
 			get_tree().quit()
 
@@ -230,6 +236,14 @@ func _cycle_quality(step: int) -> void:
 	main.world.apply_quality(next as WorldBuilder.Quality)
 	Sim.set_setting("quality", next)
 	Sim.toast.emit("GRAPHICS: %s" % WorldBuilder.Quality.keys()[next], Sim.Severity.INFO)
+	Sfx.play("ui_switch", -8.0)
+
+
+func _cycle_flight_model() -> void:
+	var next := 1 - int(Sim.settings.get("flight_model", 0))
+	Sim.set_setting("flight_model", next)
+	Sim.toast.emit("FLIGHT MODEL: %s" % Drone.FLIGHT_MODEL_NAMES[next],
+		Sim.Severity.INFO)
 	Sfx.play("ui_switch", -8.0)
 
 
@@ -378,6 +392,9 @@ func _draw_settings() -> void:
 					"timeofday":
 						value = (main.world.time_preset_name()
 							if main and main.world else "-")
+					"flightmodel":
+						value = Drone.FLIGHT_MODEL_NAMES[
+							int(Sim.settings.get("flight_model", 0))]
 					_:
 						value = ">"
 		var font: Font = _mono

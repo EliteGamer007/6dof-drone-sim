@@ -32,6 +32,7 @@ var origin: XROrigin3D
 var camera: XRCamera3D
 var left: XRController3D
 var right: XRController3D
+var _was_lost := false
 var vision: VisionPost
 
 var hud_viewport: SubViewport
@@ -54,6 +55,8 @@ func setup(drone: Drone) -> void:
 
 
 func _ready() -> void:
+	# Moved every frame, so never interpolated itself.
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	origin = XROrigin3D.new()
 	origin.name = "XROrigin3D"
 	add_child(origin)
@@ -81,6 +84,12 @@ func _ready() -> void:
 
 	if _drone:
 		_yaw = deg_to_rad(-_drone.heading_degrees())
+		# Haptics stand in for camera shake. Shaking the view in a headset is
+		# the fastest way to make someone ill; a pulse in the hands carries the
+		# same information without moving the horizon.
+		_drone.collided.connect(func(speed: float):
+			_pulse(clampf(speed / 10.0, 0.15, 1.0), 0.08 + speed * 0.01))
+	Sim.camera_shake.connect(func(strength: float): _pulse(clampf(strength, 0.3, 1.0), 0.35))
 
 
 func _process(delta: float) -> void:
@@ -94,14 +103,32 @@ func _process(delta: float) -> void:
 
 # ------------------------------------------------------------------ tracking
 
+func _pulse(amplitude: float, seconds: float) -> void:
+	for hand in [left, right]:
+		if hand:
+			hand.trigger_haptic_pulse("haptic", 0.0, amplitude, seconds, 0.0)
+
+
 func _follow_aircraft(delta: float) -> void:
+	# A crashed aircraft tumbles. Following its heading would spin the whole
+	# world round the operator's head, so the view holds where it was and
+	# watches it go down; the spare launch then cuts - never pans - to the van.
+	if _drone.damage and _drone.damage.is_destroyed():
+		_was_lost = true
+		return
+	if _was_lost:
+		_was_lost = false
+		_yaw = deg_to_rad(-_drone.heading_degrees())
 	# Position follows exactly; heading follows with a little lag so a twitchy
 	# yaw input does not whip the whole world around.
 	var target_yaw := deg_to_rad(-_drone.heading_degrees())
 	if Sim.settings.get("vr_follow_yaw", true):
 		_yaw = _lerp_angle_capped(_yaw, target_yaw, delta * 3.2,
 			deg_to_rad(90.0) * delta)
-	origin.global_position = _drone.camera_mount.global_position
+	# Interpolated, for the same reason as the flat camera rig: the headset
+	# draws far faster than the physics tick, and a head-mounted view that
+	# steps at 60 Hz is the fastest route to motion sickness there is.
+	origin.global_position = _drone.camera_mount.get_global_transform_interpolated().origin
 	origin.global_basis = Basis(Vector3.UP, _yaw)
 
 

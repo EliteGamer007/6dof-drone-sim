@@ -92,8 +92,12 @@ ACTIONS: dict[str, tuple[float, list[str]]] = {
     "yaw_right":     (0.2, [axis("RX", 1.0), key("E"), key("RIGHT")]),
     "precision_mode": (0.5, [btn("LS"), key("CTRL")]),
     "reset_drone":   (0.5, [btn("START"), key("BACKSPACE")]),
-    "return_home":   (0.5, [key("H")]),
-    "toggle_avoidance":   (0.5, [btn("RS"), key("N")]),
+    # Autopilot and payload. The pad buttons were freed by moving a few
+    # rarely-used functions to the keyboard only.
+    "return_home":   (0.5, [btn("DPAD_DOWN"), key("H")]),
+    "orbit_poi":     (0.5, [btn("RS"), key("J")]),
+    "drop_supply":   (0.5, [btn("DPAD_LEFT"), key("Z")]),
+    "toggle_avoidance":   (0.5, [key("N")]),
     # ---- camera / gimbal ----------------------------------------------------
     # RB is the camera switch: it is the button the thumb is already near.
     "switch_camera": (0.5, [btn("RB"), btn("BACK"), key("C")]),
@@ -105,7 +109,7 @@ ACTIONS: dict[str, tuple[float, list[str]]] = {
     "free_look":     (0.5, [mouse(2)]),
     # ---- vision modes -------------------------------------------------------
     "vision_next":   (0.5, [btn("Y"), key("V")]),
-    "vision_prev":   (0.5, [btn("DPAD_DOWN")]),
+    "vision_prev":   (0.5, [key("COMMA")]),
     # One button straight to thermal and straight back again - the sensor the
     # demo is about should never be three presses away.
     "toggle_thermal": (0.5, [btn("LB"), key("2"), key("T")]),
@@ -123,7 +127,7 @@ ACTIONS: dict[str, tuple[float, list[str]]] = {
     "toggle_report": (0.5, [key("TAB")]),
     "toggle_help":   (0.5, [key("F1")]),
     "toggle_hud":    (0.5, [btn("DPAD_RIGHT"), key("F2")]),
-    "cycle_map_zoom": (0.5, [btn("DPAD_LEFT"), key("O")]),
+    "cycle_map_zoom": (0.5, [key("O")]),
     "time_forward":  (0.5, [key("BRACKETRIGHT")]),
     "time_back":     (0.5, [key("BRACKETLEFT")]),
     "pause_menu":    (0.5, [key("ESCAPE")]),
@@ -181,6 +185,12 @@ shaders/enabled=true
 
 3d/default_gravity=9.81
 common/physics_ticks_per_second=60
+; The aircraft moves at the physics rate and the screen draws faster than that.
+; Interpolation renders every moving body between its last two physics states,
+; which is what removes the stepping from strafe and climb. The jitter fix is
+; the older workaround for the same problem and fights interpolation, so off.
+common/physics_interpolation=true
+common/physics_jitter_fix=0.0
 
 [rendering]
 

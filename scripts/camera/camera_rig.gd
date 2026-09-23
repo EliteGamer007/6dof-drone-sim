@@ -9,21 +9,36 @@ extends Node3D
 ## Three views, cycled with RB / Back / C:
 ##   CHASE - the standard following shot, far enough back to fly by
 ##   CLOSE - tight over-the-shoulder, where the airframe reads clearly
-##   FPV   - bolted to the nose, wide and tilted, the way an FPV quad flies
+##   FPV   - on the nose, wide and tilted, the way an FPV quad flies
+##
+## Why it is built the way it is
+##   The aircraft moves at the physics rate (60 Hz). The screen draws at the
+##   display rate - 144 Hz on a gaming laptop. A camera that reads the raw body
+##   position sees it stand still for a frame or two and then jump, and that
+##   step is the jitter: invisible flying forward, because the motion is along
+##   the view axis, and at its worst on a strafe or a climb, where the motion
+##   runs across the frame.
+##
+##   So this rig reads only the *interpolated* transform, and it holds the
+##   camera rigidly to it. Translation is never smoothed - smoothing it just
+##   trades jitter for lag. The only thing that eases is the yaw of the shot,
+##   which is what gives a chase camera its swing on a turn.
 
 enum View { CHASE, CLOSE, FPV }
 
 const VIEW_NAMES := ["CHASE", "CLOSE FOLLOW", "FPV NOSE CAM"]
 
-@export var chase_distance := 2.4
+@export var chase_distance := 2.6
 @export var chase_height := 0.85
-@export var close_distance := 0.82
-@export var close_height := 0.22
+@export var close_distance := 0.9
+@export var close_height := 0.26
 @export var close_shoulder := 0.17     ## sideways offset so the drone is not dead centre
+@export var yaw_follow := 7.0          ## how quickly the shot swings round behind a turn
+@export var wall_margin := 0.25
 
 ## Field of view per view. FPV runs wide because that is what the lens on a
 ## real FPV quad does, and the distortion is most of why the footage feels fast.
-const VIEW_FOV := [78.0, 46.0, 104.0]
+const VIEW_FOV := [78.0, 50.0, 104.0]
 
 var view: View = View.CHASE
 var camera: Camera3D
@@ -31,10 +46,14 @@ var vision: VisionPost
 
 var _drone: Drone
 var _zoom := 1.0
-var _spring: SpringArm3D
-var _shake := 0.0
+var _cam_yaw := 0.0
+var _cam_pitch := 0.0
+var _arm := -1.0
+var _lead := Vector3.ZERO
+var _vibration := 0.0
 var _shake_time := 0.0
 var _shake_power := 0.0
+var _initialised := false
 
 
 func setup(drone: Drone) -> void:
@@ -42,6 +61,11 @@ func setup(drone: Drone) -> void:
 
 
 func _ready() -> void:
+	# This node is moved every rendered frame, not every physics tick, so it
+	# must not be interpolated itself - it reads the aircraft's interpolated
+	# transform instead.
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+
 	camera = Camera3D.new()
 	camera.name = "PayloadCamera"
 	camera.fov = VIEW_FOV[view]
@@ -54,12 +78,6 @@ func _ready() -> void:
 	vision.name = "VisionPost"
 	camera.add_child(vision)
 
-	_spring = SpringArm3D.new()
-	_spring.name = "ChaseArm"
-	_spring.spring_length = chase_distance
-	_spring.margin = 0.22
-	add_child(_spring)
-
 	Sim.camera_shake.connect(_on_camera_shake)
 
 
@@ -67,18 +85,24 @@ func _process(delta: float) -> void:
 	if _drone == null or not is_instance_valid(_drone):
 		return
 	_handle_input(delta)
-
 	_shake_time = maxf(_shake_time - delta, 0.0)
+
+	var body := _drone.get_global_transform_interpolated()
+	var yaw := _yaw_of(body.basis)
+	if not _initialised:
+		_cam_yaw = yaw
+		_initialised = true
 
 	match view:
 		View.CHASE:
-			_update_follow(delta, chase_distance, chase_height, 0.0, 16.0)
+			_update_follow(delta, body.origin, yaw, chase_distance, chase_height, 0.0)
 		View.CLOSE:
-			_update_follow(delta, close_distance, close_height, close_shoulder, 22.0)
+			_update_follow(delta, body.origin, yaw, close_distance, close_height,
+				close_shoulder)
 		View.FPV:
-			_update_fpv(delta)
+			_update_fpv(delta, yaw)
 
-	_apply_shake(delta)
+	_apply_shake()
 
 	var target_fov: float = VIEW_FOV[view] / _zoom
 	camera.fov = lerpf(camera.fov, target_fov, clampf(delta * 8.0, 0.0, 1.0))
@@ -86,7 +110,7 @@ func _process(delta: float) -> void:
 
 func _handle_input(delta: float) -> void:
 	if Input.is_action_just_pressed("switch_camera"):
-		view = ((view + 1) % View.size()) as View
+		set_view(((view + 1) % View.size()) as View)
 		Sfx.play("ui_switch", -7.0)
 		Sim.toast.emit("VIEW: %s" % VIEW_NAMES[view], Sim.Severity.INFO)
 	if Input.is_action_pressed("zoom_in"):
@@ -95,63 +119,93 @@ func _handle_input(delta: float) -> void:
 		_zoom = clampf(_zoom - delta * 1.6, 1.0, 4.0)
 
 
-## Chase and close are the same shot at two distances: a spring arm behind the
-## aircraft's heading, so a wall between the camera and the drone pulls the
-## camera in instead of clipping through it.
-func _update_follow(delta: float, distance: float, height: float,
-		shoulder: float, follow_rate: float) -> void:
-	var yaw := _drone.heading_degrees()
-	var basis := Basis(Vector3.UP, deg_to_rad(-yaw))
-	_spring.global_position = (_drone.global_position + Vector3.UP * height
-		+ basis * Vector3(shoulder, 0.0, 0.0))
-	_spring.global_basis = basis
-	# Backing off as speed builds is what makes a follow shot read as fast.
-	_spring.spring_length = distance * (1.0 + _drone.ground_speed() * 0.03)
-
-	var desired := _spring.global_position + basis * Vector3(0.0, 0.0, _spring.get_hit_length())
-
-	# Smooth the *offset* from the aircraft, not the world position. Chasing
-	# the world position meant every translation - strafe, reverse, climb -
-	# dragged the camera behind and then snapped it back, which is the laggy
-	# feel. This way the rig tracks the aircraft rigidly and only the shape of
-	# the shot eases, so sideways motion is as crisp as forward motion.
-	var anchor := _drone.global_position
-	var current_offset := camera.global_position - anchor
-	var wanted_offset := desired - anchor
-	current_offset = current_offset.lerp(wanted_offset,
-		clampf(delta * follow_rate, 0.0, 1.0))
-	camera.global_position = anchor + current_offset
-
-	# A small lead so the camera looks where it is going. Kept short: a long
-	# lead swings the whole frame every time the stick moves.
-	var look_at_point := _drone.global_position + _drone.linear_velocity * 0.05
-	camera.look_at(look_at_point, Vector3.UP)
+func set_view(v: View) -> void:
+	view = v
+	_arm = -1.0          # re-measure the wall clearance for the new distance
 
 
-## Hard-mounted to the nose. Unlike the chase views this one inherits the
-## airframe's lean, so accelerating drops the horizon and braking lifts it -
-## the single cue that makes FPV footage feel like flying rather than sliding.
-func _update_fpv(delta: float) -> void:
+## Chase and close: the same shot at two distances.
+func _update_follow(delta: float, anchor: Vector3, yaw: float, distance: float,
+		height: float, shoulder: float) -> void:
+	# The yaw of the shot eases toward the aircraft's heading, which is the
+	# swing on a turn. Nothing else here is smoothed.
+	_cam_yaw = lerp_angle(_cam_yaw, yaw, clampf(delta * yaw_follow, 0.0, 1.0))
+	# In flight-sim mode the shot rises and falls with the nose, so the view
+	# shows where the aircraft is pointed rather than the ground under it.
+	_cam_pitch = lerpf(_cam_pitch, _drone.view_pitch() * 0.45,
+		clampf(delta * 5.0, 0.0, 1.0))
+	var basis := Basis(Vector3.UP, _cam_yaw) * Basis(Vector3.RIGHT, _cam_pitch)
+
+	var pivot := anchor + Vector3.UP * height + basis * Vector3(shoulder, 0.0, 0.0)
+	var wanted := distance * (1.0 + _drone.ground_speed() * 0.02)
+
+	# Wall clearance. Pulling in is immediate, so the camera can never end up
+	# inside a building; letting back out eases, so leaving a wall does not pop
+	# the shot.
+	var clear := _clearance(pivot, basis * Vector3.BACK, wanted)
+	if _arm < 0.0 or clear < _arm:
+		_arm = clear
+	else:
+		_arm = lerpf(_arm, clear, clampf(delta * 3.0, 0.0, 1.0))
+
+	camera.global_position = pivot + basis * Vector3(0.0, 0.0, _arm)
+
+	# A short, smoothed lead: the camera looks slightly ahead of the aircraft
+	# without the frame swinging every time the stick moves.
+	_lead = _lead.lerp(_drone.linear_velocity * 0.05, clampf(delta * 5.0, 0.0, 1.0))
+	var look := anchor + Vector3.UP * height * 0.35 + _lead
+	if camera.global_position.distance_squared_to(look) > 0.0001:
+		camera.look_at(look, Vector3.UP)
+
+
+## How far the camera can sit back from the pivot before it meets geometry.
+func _clearance(from: Vector3, direction: Vector3, length: float) -> float:
+	var space := get_world_3d().direct_space_state
+	var params := PhysicsRayQueryParameters3D.create(from,
+		from + direction * (length + wall_margin))
+	params.exclude = [_drone.get_rid()]
+	params.collide_with_areas = false
+	var hit := space.intersect_ray(params)
+	if hit.is_empty():
+		return length
+	return maxf(from.distance_to(hit.position) - wall_margin, 0.2)
+
+
+## On the nose. Unlike the chase views this one inherits the airframe's
+## attitude, so accelerating drops the horizon and braking lifts it - the
+## single cue that makes FPV footage feel like flying rather than sliding.
+func _update_fpv(delta: float, yaw: float) -> void:
 	var mount := _drone.camera_mount
 	if mount == null:
 		return
-	var yaw := deg_to_rad(-_drone.heading_degrees())
-	var lean := _drone.body_lean()
+	var lean := _drone.body_lean()          # interpolated
+	var pitch := lean.x + deg_to_rad(_drone.gimbal_pitch)
+	var roll := lean.y
+	if _drone.flight_model == Drone.FlightModel.ARCADE:
+		# In arcade the lean is there to be read, not to swing the horizon on
+		# every stick input, so the nose camera takes most of it but not all.
+		pitch = lean.x * 0.6 + deg_to_rad(_drone.gimbal_pitch)
+		roll = lean.y * 0.6
 
-	var basis := Basis(Vector3.UP, yaw)
-	basis = basis * Basis(Vector3.RIGHT, lean.x + deg_to_rad(_drone.gimbal_pitch))
-	basis = basis * Basis(Vector3.FORWARD, lean.y)
+	var basis := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch) \
+		* Basis(Vector3.BACK, roll)
 
-	# Frame vibration: small, throttle-dependent, and it settles to nothing in a
-	# hover. Any more than this and it reads as a broken camera.
-	_shake = lerpf(_shake, _drone.throttle_command * 0.0016
-		+ _drone.ground_speed() * 0.00022, clampf(delta * 6.0, 0.0, 1.0))
+	# Frame vibration: small, speed-dependent, gone in a hover. Any more than
+	# this and it reads as a broken camera.
+	_vibration = lerpf(_vibration, _drone.ground_speed() * 0.00018,
+		clampf(delta * 6.0, 0.0, 1.0))
 	var t := Time.get_ticks_msec() * 0.001
 	basis = basis * Basis.from_euler(Vector3(
-		sin(t * 61.0) * _shake, sin(t * 47.0) * _shake, sin(t * 53.0) * _shake))
+		sin(t * 61.0) * _vibration, sin(t * 47.0) * _vibration,
+		sin(t * 53.0) * _vibration))
 
-	camera.global_position = mount.global_position
-	camera.global_basis = basis
+	camera.global_transform = Transform3D(basis,
+		mount.get_global_transform_interpolated().origin)
+
+
+static func _yaw_of(basis: Basis) -> float:
+	var fwd := -basis.z
+	return atan2(-fwd.x, -fwd.z)
 
 
 ## Blast shake, applied after the view has positioned the camera so it works
@@ -162,7 +216,7 @@ func _on_camera_shake(strength: float) -> void:
 	_shake_time = maxf(_shake_time, 0.7 * strength)
 
 
-func _apply_shake(_delta: float) -> void:
+func _apply_shake() -> void:
 	if _shake_time <= 0.0:
 		_shake_power = 0.0
 		return

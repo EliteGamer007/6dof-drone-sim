@@ -44,6 +44,8 @@ func _ready() -> void:
 			"target": 55, "progress": 0, "done": false},
 		{"id": "structural", "text": "Flag unstable structures",
 			"target": 3, "progress": 0, "done": false},
+		{"id": "aid", "text": "Drop first-aid kits to survivors",
+			"target": 3, "progress": 0, "done": false},
 	]
 	Sim.finding_logged.connect(_on_finding)
 	objectives_changed.emit()
@@ -133,6 +135,16 @@ func _recount() -> void:
 	_set_progress("survivors", _count_kind(Sim.FindingKind.VICTIM))
 	_set_progress("gas", _count_distinct_gases())
 	_set_progress("structural", _count_kind(Sim.FindingKind.STRUCTURAL))
+	_set_progress("aid", _count_supplied())
+
+
+func _count_supplied() -> int:
+	var n := 0
+	for node in get_tree().get_nodes_in_group("detectable"):
+		var v := node as Victim
+		if v != null and v.supplied:
+			n += 1
+	return n
 
 
 func _count_kind(kind: Sim.FindingKind) -> int:

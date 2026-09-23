@@ -66,6 +66,8 @@ func _physics_process(delta: float) -> void:
 
 	if not _started:
 		_started = true
+		if drone.damage:
+			drone.damage.enabled = false
 		_teleport(drone, WAYPOINTS[_index])
 
 	_elapsed += delta
@@ -98,6 +100,7 @@ func _teleport(drone: Drone, stop: Dictionary) -> void:
 	drone.global_position = Vector3(target.x, ground + target.y, target.z)
 	drone.linear_velocity = Vector3.ZERO
 	drone.angular_velocity = Vector3.ZERO
+	drone.reset_physics_interpolation()
 	var flat := Vector3(0.0, 0.0, -12.0) - drone.global_position
 	flat.y = 0.0
 	if flat.length() > 0.1:
@@ -200,6 +203,7 @@ func _finish() -> void:
 	_check("report exports", _export_report_ok())
 	_check_launch_pad(drone)
 	_check_contact_tagging()
+	_check_damage(drone)
 	_check_all_survivors_count()
 	_check_detonation()
 	_check_thermal_field()
@@ -324,6 +328,46 @@ func _check_day_night() -> void:
 		_main.world.time_preset_name())
 
 	_main.world.set_time_of_day(original)
+
+
+## The airframe has to be fragile in a way the pilot feels - a bump is free,
+## a real hit costs integrity and thrust, enough of it brings the aircraft down,
+## and a return to the van puts it right.
+func _check_damage(drone: Drone) -> void:
+	var dm := drone.damage
+	_check("the aircraft has a damage model", dm != null)
+	if dm == null:
+		return
+	dm.enabled = true
+	dm.repair()
+
+	dm.impact(1.0)
+	_check("brushing a wall at walking pace is free", dm.integrity == 100.0,
+		"%.1f %%" % dm.integrity)
+
+	dm.impact(7.0)
+	_check("a 7 m/s impact costs real integrity", dm.integrity < 75.0,
+		"%.1f %%" % dm.integrity)
+	_check("a hard impact costs thrust", dm.thrust_factor() < 1.0,
+		"thrust %.2f" % dm.thrust_factor())
+
+	var before := dm.integrity
+	dm.blast(drone.global_position + Vector3(3.0, 0.0, 0.0), 1.0)
+	_check("a nearby detonation hurts the aircraft", dm.integrity < before - 20.0,
+		"%.1f -> %.1f %%" % [before, dm.integrity])
+
+	var guard := 0
+	while not dm.is_destroyed() and guard < 20:
+		dm.impact(9.0)
+		guard += 1
+	_check("enough damage brings the aircraft down", dm.is_destroyed())
+	_check("a downed aircraft falls", drone.gravity_scale > 0.5)
+
+	drone.reset_to_start()
+	_check("the spare launches repaired", dm.integrity == 100.0
+		and not dm.is_destroyed() and drone.gravity_scale == 0.0
+		and dm.thrust_factor() == 1.0)
+	dm.enabled = false
 
 
 ## The reported bug: a survivor could be tagged, and show as tagged in the

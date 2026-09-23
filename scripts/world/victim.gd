@@ -33,6 +33,9 @@ const CLOTHED_LIMB := 30.1
 ## nobody can see in the editor, which is why they ended up floating and
 ## half-buried.
 @export var snap_to_ground := true
+
+## Set when a first-aid kit from the payload bay lands within reach.
+var supplied := false
 ## How far above the authored position to start looking, and how far down to
 ## search. Kept short on purpose: a survivor placed in the void under a slab
 ## should land on the void floor, not be dragged down through the world.
@@ -112,6 +115,7 @@ func _snap_to_ground() -> void:
 	if hit.is_empty():
 		return
 	global_position = Vector3(global_position.x, hit.position.y, global_position.z)
+	reset_physics_interpolation()
 
 
 func _exit_tree() -> void:

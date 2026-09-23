@@ -9,13 +9,14 @@ extends Node
 enum VisionMode { NORMAL, THERMAL, NIGHT, GAS }
 enum ThermalPalette { WHITE_HOT, BLACK_HOT, IRONBOW, ARCTIC, LAVA, ALERT }
 enum Severity { INFO, CAUTION, WARNING, CRITICAL }
-enum FindingKind { VICTIM, GAS_LEAK, FIRE, STRUCTURAL, MARKER, PHOTO }
+enum FindingKind { VICTIM, GAS_LEAK, FIRE, STRUCTURAL, MARKER, PHOTO, SUPPLY }
 
 const VISION_NAMES := ["EO / DAYLIGHT", "THERMAL IR", "LOW-LIGHT NV", "GAS OVERLAY"]
 const PALETTE_NAMES := ["WHITE HOT", "BLACK HOT", "IRONBOW", "ARCTIC", "LAVA",
 	"ISOTHERM ALERT"]
 const SEVERITY_NAMES := ["INFO", "CAUTION", "WARNING", "CRITICAL"]
-const KIND_NAMES := ["SURVIVOR", "GAS LEAK", "FIRE", "STRUCTURE", "MARKER", "PHOTO"]
+const KIND_NAMES := ["SURVIVOR", "GAS LEAK", "FIRE", "STRUCTURE", "MARKER", "PHOTO",
+	"SUPPLY DROP"]
 
 const SEVERITY_COLORS := [
 	Color(0.55, 0.78, 0.95),
@@ -78,6 +79,7 @@ var settings := {
 	"master_volume": 0.9,
 	"hud_opacity": 1.0,
 	"quality": 1,                # WorldBuilder.Quality.MEDIUM
+	"flight_model": 0,           # Drone.FlightModel.ARCADE
 	"obstacle_assist": false,
 	"show_detection_boxes": true,
 	"sensor_noise": true,
@@ -112,6 +114,8 @@ func start_mission() -> void:
 		node.tagged = false
 		node.finding_id = 0
 		node.first_detected_at = -1.0
+		if "supplied" in node:
+			node.supplied = false
 	findings.clear()
 	mission_time = 0.0
 	coverage_percent = 0.0

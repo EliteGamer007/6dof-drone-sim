@@ -168,6 +168,7 @@ func _draw_hud() -> void:
 		_draw_contact_panel(size, s, alpha)
 		_draw_offscreen_arrows(size, s, alpha)
 	_draw_sensor_legend(size, s, alpha)
+	_draw_autopilot(size, s)
 	_draw_toasts(size, s)
 	_draw_alarm(size, s)
 
@@ -369,7 +370,7 @@ func _sparkline(rect: Rect2, channel: int, values: PackedFloat32Array,
 
 func _draw_telemetry(size: Vector2, s: float, alpha: float) -> void:
 	var w := 290.0 * s
-	var h := 268.0 * s
+	var h := 344.0 * s
 	var rect := Rect2(Vector2(size.x - w - 16.0 * s, 70.0 * s), Vector2(w, h))
 	_panel(rect, alpha)
 
@@ -380,6 +381,7 @@ func _draw_telemetry(size: Vector2, s: float, alpha: float) -> void:
 	y += 26.0 * s
 
 	var rows := [
+		["MODE", drone.flight_model_name(), COL_ACCENT],
 		["ALT AGL", "%.1f m" % drone.altitude_agl(), COL_TEXT],
 		["ALT MSL", "%.1f m" % drone.global_position.y, COL_DIM],
 		["GND SPD", "%.1f m/s" % drone.ground_speed(), COL_TEXT],
@@ -390,6 +392,17 @@ func _draw_telemetry(size: Vector2, s: float, alpha: float) -> void:
 		["WIND", "%.1f m/s" % Hazards.current_wind().length(), COL_DIM],
 		["DIST FLOWN", "%.0f m" % drone.total_distance, COL_DIM],
 	]
+	if drone.flight_model == Drone.FlightModel.SIM:
+		rows.insert(1, ["AIRSPEED", "%.1f m/s" % drone.sim_airspeed(), COL_ACCENT])
+	if drone.damage:
+		var hp := drone.damage.integrity
+		rows.insert(0, ["AIRFRAME", "LOST" if drone.damage.is_destroyed()
+			else "%d %%" % int(hp),
+			COL_ACCENT if hp > 60.0 else (COL_WARN if hp > 25.0 else COL_CRIT)])
+	if drone.payload:
+		rows.append(["AID KITS", "%d / %d" % [drone.payload.remaining,
+			drone.payload.capacity],
+			COL_TEXT if drone.payload.remaining > 0 else COL_WARN])
 	for row in rows:
 		_text(Vector2(x, y), row[0], fs * 0.88, COL_DIM, true)
 		var vw := _text_width(row[1], fs, true)
@@ -878,6 +891,21 @@ func _draw_sensor_legend(size: Vector2, s: float, alpha: float) -> void:
 		"Brightness is amplified light, not temperature", 12.0 * s, COL_DIM)
 
 
+## A banner across the top while the autopilot has the aircraft, so it is never
+## ambiguous who is flying.
+func _draw_autopilot(size: Vector2, s: float) -> void:
+	if drone.autopilot == null or not drone.autopilot.active:
+		return
+	var text := "AUTOPILOT  -  %s  -  ANY STICK TO TAKE OVER" % drone.autopilot.status_text()
+	var fs := 17.0 * s
+	var w := _text_width(text, fs, true) + 40.0 * s
+	var rect := Rect2(Vector2((size.x - w) * 0.5, 66.0 * s), Vector2(w, 32.0 * s))
+	var pulse := 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.006)
+	_panel(rect, pulse, COL_WARN)
+	_text(Vector2(rect.position.x + 20.0 * s, rect.position.y + 22.0 * s), text, fs,
+		COL_WARN, true)
+
+
 func _draw_toasts(size: Vector2, s: float) -> void:
 	# Left-hand message stack: never over the picture, never over a contact
 	# briefing, and in the place the eye already goes for the gas panel.
@@ -921,19 +949,18 @@ func _draw_help(size: Vector2, s: float) -> void:
 	y += 34.0 * s
 
 	var groups := [
-		["FLIGHT", [
-			["Forward / back", "Left stick   W / S"],
-			["Strafe left / right", "Left stick   A / D"],
-			["Up / down", "RT / LT      Space / Shift"],
-			["Turn", "Right stick  Q / E, arrows"],
-			["Slow (precision)", "L3           Ctrl"],
-			["Reset airframe", "Start        Backspace"],
+		_flight_help(),
+		["AUTOPILOT & PAYLOAD", [
+			["Return to the van", "D-pad down   H"],
+			["Orbit the contact", "R3           J"],
+			["Drop first-aid kit", "D-pad left   Z"],
+			["Detonate fuel drum", "B            B"],
 		]],
 		["PAYLOAD", [
 			["THERMAL on / off", "LB           2 or T"],
 			["Cycle vision mode", "Y            V"],
 			["Direct: EO/NV/Gas", "-            1 3 4"],
-			["Thermal palette", "-            B"],
+			["Thermal palette", "-            M"],
 			["Gimbal tilt / centre", "Right stick Y  R / F / G"],
 			["Spotlight", "D-pad up     L"],
 		]],
@@ -974,6 +1001,26 @@ func _draw_help(size: Vector2, s: float) -> void:
 		"contact, A cycles the sensor, and the gas readout is on your left wrist.",
 		14.0 * s, COL_DIM)
 	_text(Vector2(x, rect.end.y - 22.0 * s), "F1 to close", 15.0 * s, COL_ACCENT, true)
+
+
+func _flight_help() -> Array:
+	if drone and drone.flight_model == Drone.FlightModel.SIM:
+		return ["FLIGHT  (FLIGHT SIM)", [
+			["Point the nose", "Left stick   W A S D"],
+			["Accelerate / brake", "RT / LT      Space / Shift"],
+			["Climb / descend", "Right stick  R / F"],
+			["Slide sideways", "Right stick  Q / E"],
+			["Slow (precision)", "L3           Ctrl"],
+			["Reset airframe", "Start        Backspace"],
+		]]
+	return ["FLIGHT  (ARCADE)", [
+		["Forward / back", "Left stick   W / S"],
+		["Strafe left / right", "Left stick   A / D"],
+		["Up / down", "RT / LT      Space / Shift"],
+		["Turn", "Right stick  Q / E, arrows"],
+		["Slow (precision)", "L3           Ctrl"],
+		["Reset airframe", "Start        Backspace"],
+	]]
 
 
 ## After-action summary - the deliverable an assessment flight is actually for.

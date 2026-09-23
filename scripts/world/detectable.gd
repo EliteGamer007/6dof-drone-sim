@@ -51,6 +51,34 @@ func _on_tagged() -> void:
 	pass
 
 
+## The contact closest to the line the reticle is pointing down, ignoring
+## detector confidence and line of sight entirely - purely "what am I aiming
+## at". Used by the tag button and by the orbit autopilot.
+static func under_reticle(tree: SceneTree, origin: Vector3,
+		direction: Vector3) -> Detectable:
+	var best: Detectable = null
+	var best_miss := INF
+	for node in tree.get_nodes_in_group("detectable"):
+		var candidate := node as Detectable
+		if candidate == null or not is_instance_valid(candidate):
+			continue
+		var to_target := candidate.global_position - origin
+		var along := to_target.dot(direction)
+		if along <= 0.5 or along > candidate.max_detect_range:
+			continue
+		var miss := (to_target - direction * along).length()
+		# Tolerance grows with range so a distant contact is not impossible to
+		# put the reticle on, but never gets so wide that aiming stops meaning
+		# anything.
+		var tolerance := maxf(candidate.detection_radius * 2.0, along * 0.05)
+		if miss > tolerance:
+			continue
+		if miss < best_miss:
+			best_miss = miss
+			best = candidate
+	return best
+
+
 func describe() -> String:
 	return detail if detail != "" else label
 

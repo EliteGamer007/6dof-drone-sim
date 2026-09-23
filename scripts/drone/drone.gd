@@ -71,6 +71,8 @@ var proximity: ProximityArray
 var gas_sensor: GasSensor
 var detector: TargetDetector
 var trail: GasTrail
+var payload: PayloadBay
+var damage: DamageModel                   ## set by the DamageModel child
 
 
 # ---------------------------------------------------------------- lifecycle
@@ -108,6 +110,9 @@ func _ready() -> void:
 	Hazards.register_heat(self, 9.0, 0.4)
 
 	body_entered.connect(_on_body_entered)
+	flight_model = int(Sim.settings.get("flight_model", FlightModel.ARCADE))
+	Sim.settings_changed.connect(func():
+		set_flight_model(int(Sim.settings.get("flight_model", FlightModel.ARCADE))))
 
 	engine_sound.play()
 
@@ -208,20 +213,46 @@ func _build_rotor_wash() -> void:
 	add_child(rotor_wash)
 
 
+## Sensors, autopilot and payload bay. They are nodes in scenes/drone.tscn so
+## the aircraft's structure can be seen and edited in the editor; anything the
+## scene does not provide is built here, so a bare Drone.new() still works.
 func _build_sensors() -> void:
-	proximity = ProximityArray.new()
-	proximity.name = "ProximityArray"
-	add_child(proximity)
+	proximity = get_node_or_null("ProximityArray") as ProximityArray
+	if proximity == null:
+		proximity = ProximityArray.new()
+		proximity.name = "ProximityArray"
+		add_child(proximity)
 
-	gas_sensor = GasSensor.new()
-	gas_sensor.name = "GasSensor"
-	# Sampling head sits below the airframe, out of the prop wash.
-	gas_sensor.position = Vector3(0.0, -0.09, 0.0)
-	add_child(gas_sensor)
+	gas_sensor = get_node_or_null("GasSensor") as GasSensor
+	if gas_sensor == null:
+		gas_sensor = GasSensor.new()
+		gas_sensor.name = "GasSensor"
+		# Sampling head sits below the airframe, out of the prop wash.
+		gas_sensor.position = Vector3(0.0, -0.09, 0.0)
+		add_child(gas_sensor)
 
-	detector = TargetDetector.new()
-	detector.name = "TargetDetector"
-	add_child(detector)
+	detector = get_node_or_null("TargetDetector") as TargetDetector
+	if detector == null:
+		detector = TargetDetector.new()
+		detector.name = "TargetDetector"
+		add_child(detector)
+
+	if autopilot == null:
+		var ap := Autopilot.new()
+		ap.name = "Autopilot"
+		add_child(ap)           # registers itself as drone.autopilot
+
+	if damage == null:
+		var dm := DamageModel.new()
+		dm.name = "DamageModel"
+		add_child(dm)            # registers itself as drone.damage
+
+	payload = get_node_or_null("PayloadBay") as PayloadBay
+	if payload == null:
+		payload = PayloadBay.new()
+		payload.name = "PayloadBay"
+		payload.position = Vector3(0.0, -0.14, 0.02)
+		add_child(payload)
 
 	trail = GasTrail.new()
 	trail.drone = self
@@ -336,75 +367,146 @@ func _build_nav_lights() -> void:
 
 # ------------------------------------------------------------------ physics
 
-## Handling model.
+## Handling.
 ##
-## The sticks command a velocity, but the aircraft is not teleported onto it:
-## it accelerates towards it at a finite rate, brakes harder than it
-## accelerates, and banks by however much specific force it is pulling. So it
-## carries momentum, leans into a turn and settles afterwards - while still
-## going exactly where it is pointed and stopping dead when you let go. No
-## uncommanded drift in any axis.
-@export_group("Handling")
-@export var cruise_speed := 12.0          ## m/s forward
-@export var strafe_ratio := 0.88          ## sideways is slower than forward
-@export var climb_speed := 5.0            ## m/s vertical
-@export var accel := 16.0                 ## m/s^2 powering up
-@export var brake_accel := 16.0           ## m/s^2 with the sticks centred
-@export var vertical_accel := 12.0        ## m/s^2 on the climb axis
-@export var turn_rate_degrees := 95.0
-@export var turn_accel_degrees := 420.0   ## how fast the yaw rate itself changes
-@export var max_bank_degrees := 26.0      ## visual limit on the airframe lean
+## Two flight models, picked in Settings (Esc -> Flight model):
+##
+##   ARCADE      The sticks command a velocity in the aircraft's own frame. It
+##               goes where it is pointed and stops when the sticks centre;
+##               strafe, climb and turn are independent and equally crisp.
+##
+##   FLIGHT SIM  The aircraft has a nose. The left stick points it - up and
+##               down pitch the nose, left and right turn - and RT drives it
+##               along wherever the nose is pointing, LT brakes. The right
+##               stick climbs and slides directly. Momentum carries: let go of
+##               the trigger and it coasts down to a hover instead of stopping
+##               dead, the way a real aircraft does.
+##
+## Both are commanded-velocity models on top of the rigid body, so walls still
+## stop the aircraft and neither can drift: no input means a zero command, and
+## the body is brought to rest.
+##
+## Rendering never reads this state directly. The body moves at the physics
+## rate; the screen draws at the display rate. Everything that follows the
+## aircraft on screen reads the *interpolated* transform, and the few values
+## the cameras need that are not part of a transform (lean, nose angle) are
+## interpolated here, in body_lean() and view_pitch().
 
+enum FlightModel { ARCADE, SIM }
+const FLIGHT_MODEL_NAMES := ["ARCADE", "FLIGHT SIM"]
+
+## Fine control near the centre of the stick, full authority at the edge.
+const STICK_EXPO := 0.28
+
+@export_group("Arcade handling")
+@export var cruise_speed := 12.0          ## m/s horizontal
+@export var climb_speed := 6.0            ## m/s vertical
+@export var accel := 24.0                 ## m/s^2 toward the stick command
+@export var brake_accel := 28.0           ## m/s^2 once the sticks centre
+@export var vertical_accel := 20.0        ## m/s^2 on the climb axis
+@export var turn_rate_degrees := 100.0
+@export var turn_accel_degrees := 600.0   ## how fast the yaw rate itself changes
+@export var max_bank_degrees := 20.0      ## visual limit on the airframe lean
+
+@export_group("Flight sim handling")
+@export var sim_max_speed := 18.0         ## m/s along the nose at full throttle
+@export var sim_accel := 7.5              ## m/s^2 at full RT
+@export var sim_brake := 15.0             ## m/s^2 at full LT
+@export var sim_coast_drag := 1.8         ## m/s^2 with neither trigger held
+@export var sim_pitch_rate_degrees := 55.0
+@export var sim_max_pitch_degrees := 50.0
+@export var sim_turn_rate_degrees := 80.0
+@export var sim_climb_speed := 5.0        ## right stick up/down, direct
+@export var sim_slide_speed := 4.0        ## right stick left/right, direct
+@export var sim_max_bank_degrees := 32.0
+
+var flight_model: int = FlightModel.ARCADE
 var airframe: Node3D
+var autopilot: Autopilot                  ## set by the Autopilot child, if any
+
 var _yaw_rate := 0.0
 var _last_velocity := Vector3.ZERO
+var _smoothed_accel := Vector3.ZERO
 var _lean := Vector2.ZERO                 ## x pitch, y roll, radians
+var _lean_prev := Vector2.ZERO
+var _sim_speed := 0.0
+var _nose_pitch := 0.0                    ## radians, flight-sim mode only
+var _nose_prev := 0.0
 
 
 func _physics_process(delta: float) -> void:
+	_lean_prev = _lean
+	_nose_prev = _nose_pitch
 	_read_discrete_inputs()
 
-	# Normal video-game layout, never inverted:
-	#   W / S (left stick up/down)    forward / back
-	#   A / D (left stick left/right) strafe
-	#   Space / Shift (RT / LT)       up / down
-	#   Q / E, arrow keys (right stick) turn
-	var forward := Input.get_axis("pitch_down", "pitch_up")
-	var strafe := Input.get_axis("roll_left", "roll_right")
-	var lift := Input.get_action_strength("throttle_up") - Input.get_action_strength("throttle_down")
-	var turn := Input.get_axis("yaw_left", "yaw_right")
+	if damage and damage.is_destroyed():
+		# Motors cut. Nothing is commanded; the body falls under gravity until
+		# the damage model launches the spare.
+		_update_visuals(0.0, delta)
+		_last_velocity = linear_velocity
+		return
 
 	precision = Input.is_action_pressed("precision_mode")
 	var scale := 0.4 if precision else 1.0
+	# A damaged aircraft has less thrust to give: top speed, climb and turn
+	# all come down with it, so the pilot feels the damage, not just reads it.
+	if damage:
+		scale *= lerpf(0.4, 1.0, damage.thrust_factor())
 
-	var heading := Basis(UP, _current_yaw())
-	var stick := Vector3(strafe * strafe_ratio, 0.0, -forward)
-	if stick.length() > 1.0:
-		stick = stick.normalized()
-	var target := heading * stick * cruise_speed * scale
+	var command := Vector3.ZERO           # world-space velocity the sticks ask for
+	var yaw_command := 0.0                # rad/s
+	var horizontal_rate := accel
+	var vertical_rate := vertical_accel
+
+	if autopilot and autopilot.active:
+		# The autopilot flies the aircraft through exactly the same command
+		# path as the sticks, so it inherits the same smoothing and the same
+		# collision behaviour - it cannot do anything a pilot could not.
+		command = autopilot.velocity_command()
+		yaw_command = autopilot.yaw_command()
+		horizontal_rate = accel * 0.8
+		_nose_pitch = move_toward(_nose_pitch, 0.0, delta)
+		_sim_speed = Vector3(command.x, 0.0, command.z).length()
+	elif flight_model == FlightModel.SIM:
+		var sim := _sim_command(delta, scale)
+		command = sim[0]
+		yaw_command = sim[1]
+		# The ramp lives in the throttle, so the velocity itself can follow
+		# the command closely - that is what keeps it from feeling soft.
+		horizontal_rate = 30.0
+		vertical_rate = 16.0
+	else:
+		var arcade := _arcade_command(scale)
+		command = arcade[0]
+		yaw_command = arcade[1]
+		horizontal_rate = accel if arcade[2] else brake_accel
+
 	if bool(Sim.settings.get("obstacle_assist", false)):
-		target = _apply_obstacle_assist(target)
+		command = _apply_obstacle_assist(command)
 
-	# Accelerate at one rate, brake at a firmer one. A quad can always stop
-	# harder than it can accelerate, and it is what makes this easy to fly.
+	# Landing assist: descending onto a surface, the last couple of metres are
+	# flown at a touchdown rate, the way a real flight controller does. So a
+	# landing is never scored as a crash - that is kept for actual crashes.
+	if command.y < -1.3:
+		var agl := altitude_agl()
+		if agl < 2.5:
+			command.y = maxf(command.y,
+				lerpf(-1.2, command.y, clampf((agl - 0.4) / 2.1, 0.0, 1.0)))
+
 	var flat := Vector3(linear_velocity.x, 0.0, linear_velocity.z)
-	var rate := accel if stick.length_squared() > 0.001 else brake_accel
-	flat = flat.move_toward(target, rate * delta)
-
-	var vy := move_toward(linear_velocity.y, lift * climb_speed * scale,
-		vertical_accel * delta)
+	flat = flat.move_toward(Vector3(command.x, 0.0, command.z), horizontal_rate * delta)
+	var vy := move_toward(linear_velocity.y, command.y, vertical_rate * delta)
 	linear_velocity = Vector3(flat.x, vy, flat.z)
 
-	# Yaw rate ramps rather than snapping, so a turn starts and stops smoothly
-	# instead of the whole airframe stepping sideways.
-	_yaw_rate = move_toward(_yaw_rate,
-		-turn * deg_to_rad(turn_rate_degrees) * scale,
+	# Yaw rate ramps rather than snapping, so a turn starts and finishes
+	# smoothly instead of the whole frame stepping round.
+	_yaw_rate = move_toward(_yaw_rate, yaw_command,
 		deg_to_rad(turn_accel_degrees) * delta)
 	angular_velocity = Vector3(0.0, _yaw_rate, 0.0)
 
-	_update_lean(heading, delta)
+	_update_attitude(delta)
 
-	var effort := clampf(target.length() / cruise_speed, 0.0, 1.0)
+	var effort := clampf(command.length() / maxf(cruise_speed, 0.1), 0.0, 1.0)
 	var thrust := mass * GRAVITY * (1.0 + effort * 0.6)
 	throttle_command = thrust / max_total_thrust
 	for i in 4:
@@ -417,6 +519,70 @@ func _physics_process(delta: float) -> void:
 	max_altitude = maxf(max_altitude, altitude_agl())
 	_last_position = global_position
 	_last_velocity = linear_velocity
+
+
+## Arcade: the left stick is a velocity in the aircraft's own frame.
+## Returns [command, yaw_rate, stick_active].
+func _arcade_command(scale: float) -> Array:
+	var forward := _shape(Input.get_axis("pitch_down", "pitch_up"))
+	var strafe := _shape(Input.get_axis("roll_left", "roll_right"))
+	var lift := Input.get_action_strength("throttle_up") \
+		- Input.get_action_strength("throttle_down")
+	var turn := _shape(Input.get_axis("yaw_left", "yaw_right"))
+
+	var stick := Vector3(strafe, 0.0, -forward)
+	if stick.length() > 1.0:
+		stick = stick.normalized()
+	var command := Basis(UP, _current_yaw()) * stick * cruise_speed * scale
+	command.y = lift * climb_speed * scale
+	return [command, -turn * deg_to_rad(turn_rate_degrees) * scale,
+		stick.length_squared() > 0.0001]
+
+
+## Flight sim: the left stick points the nose, the triggers drive along it.
+## Returns [command, yaw_rate].
+func _sim_command(delta: float, scale: float) -> Array:
+	# Stick up is nose up and stick right is turn right. Not inverted, on
+	# purpose: this is a drone, not an aircraft yoke.
+	var steer := _shape(Input.get_axis("roll_left", "roll_right"))
+	var pitch_in := _shape(Input.get_axis("pitch_down", "pitch_up"))
+	var rt := Input.get_action_strength("throttle_up")
+	var lt := Input.get_action_strength("throttle_down")
+	var vertical := _shape(Input.get_axis("gimbal_down", "gimbal_up"))
+	var slide := _shape(Input.get_axis("yaw_left", "yaw_right"))
+
+	var limit := deg_to_rad(sim_max_pitch_degrees)
+	_nose_pitch = clampf(
+		_nose_pitch + pitch_in * deg_to_rad(sim_pitch_rate_degrees) * delta,
+		-limit, limit)
+
+	if lt > 0.01:
+		_sim_speed = move_toward(_sim_speed, 0.0, sim_brake * lt * delta)
+	elif rt > 0.01:
+		_sim_speed = move_toward(_sim_speed, sim_max_speed * rt * scale,
+			sim_accel * delta)
+	else:
+		_sim_speed = move_toward(_sim_speed, 0.0, sim_coast_drag * delta)
+
+	var heading := Basis(UP, _current_yaw())
+	var nose := heading * Basis(Vector3.RIGHT, _nose_pitch) * Vector3.FORWARD
+
+	# Momentum cannot build up against something solid. If the body is being
+	# held back - a wall, the ground - the throttle speed is pulled down to
+	# what it is actually achieving, so backing off does not launch it.
+	var achieved := maxf(linear_velocity.dot(nose), 0.0)
+	_sim_speed = minf(_sim_speed, achieved + 3.0)
+
+	var command := nose * _sim_speed
+	command += UP * vertical * sim_climb_speed * scale
+	command += heading * Vector3.RIGHT * slide * sim_slide_speed * scale
+	return [command, -steer * deg_to_rad(sim_turn_rate_degrees) * scale]
+
+
+## Soft centre, full edge. Keyboard input is 0 or 1 and passes through intact.
+func _shape(v: float) -> float:
+	var a := absf(v)
+	return signf(v) * (a * (1.0 - STICK_EXPO) + a * a * a * STICK_EXPO)
 
 
 ## Braking assist. Scales back only the part of the commanded velocity that is
@@ -444,37 +610,99 @@ func _apply_obstacle_assist(target: Vector3) -> Vector3:
 	return target - into * closing * (1.0 - allowed)
 
 
-## Bank angle from specific force, the way a real multirotor works: the
-## airframe tilts by exactly the angle whose horizontal thrust component
-## produces the acceleration it is pulling, plus a standing tilt to hold
-## against drag at speed. Pure animation - the collision body stays level, so
-## none of this can tip the aircraft over or push it off course.
-func _update_lean(heading: Basis, delta: float) -> void:
+## Airframe attitude. Pure animation: the collision body stays level, so none
+## of this can tip the aircraft or push it off course.
+##
+## Arcade leans by the specific force the aircraft is pulling, the way a real
+## multirotor has to tilt to accelerate. Flight sim points the airframe along
+## the nose and banks into turns in proportion to speed.
+func _update_attitude(delta: float) -> void:
 	if airframe == null:
 		return
-	var accel_world := (linear_velocity - _last_velocity) / maxf(delta, 0.0001)
-	var drag_trim := Vector3(linear_velocity.x, 0.0, linear_velocity.z) * 0.30
-	var local := heading.inverse() * (accel_world + drag_trim)
+	var heading := Basis(UP, _current_yaw())
 
-	var limit := deg_to_rad(max_bank_degrees)
-	var want := Vector2(
-		clampf(atan2(local.z, GRAVITY) * 0.65, -limit, limit),
-		clampf(atan2(-local.x, GRAVITY) * 0.65, -limit, limit))
-	_lean = _lean.lerp(want, clampf(delta * 11.0, 0.0, 1.0))
-	airframe.rotation.x = _lean.x
-	airframe.rotation.z = _lean.y
+	# The raw acceleration steps every time move_toward reaches its target,
+	# so it is smoothed before anything is drawn from it. Leaning straight off
+	# the raw value is what made the airframe twitch on a stick release.
+	var raw := (linear_velocity - _last_velocity) / maxf(delta, 0.0001)
+	_smoothed_accel = _smoothed_accel.lerp(raw, clampf(delta * 9.0, 0.0, 1.0))
+
+	var want := Vector2.ZERO
+	if flight_model == FlightModel.SIM and not (autopilot and autopilot.active):
+		var bank_limit := deg_to_rad(sim_max_bank_degrees)
+		want.x = _nose_pitch
+		want.y = clampf(_yaw_rate * _sim_speed * 0.05, -bank_limit, bank_limit)
+	else:
+		var drag_trim := Vector3(linear_velocity.x, 0.0, linear_velocity.z) * 0.25
+		var local := heading.inverse() * (_smoothed_accel + drag_trim)
+		var limit := deg_to_rad(max_bank_degrees)
+		want.x = clampf(atan2(local.z, GRAVITY) * 0.6, -limit, limit)
+		want.y = clampf(atan2(-local.x, GRAVITY) * 0.6, -limit, limit)
+
+	_lean = _lean.lerp(want, clampf(delta * 8.0, 0.0, 1.0))
+	var wobble := _wobble()
+	airframe.rotation.x = _lean.x + wobble.x
+	airframe.rotation.z = _lean.y + wobble.y
 
 
-## Current airframe attitude in radians - read by the FPV camera so the nose
-## cam inherits the lean.
+## Uneven motors make the airframe hunt. Smooth in time, so it reads as a
+## struggling aircraft rather than as noise - and it is in body_lean(), so the
+## nose camera feels it too.
+func _wobble() -> Vector2:
+	if damage == null:
+		return Vector2.ZERO
+	var amount := damage.imbalance() * 0.14 + (1.0 - damage.integrity / 100.0) * 0.035
+	if amount < 0.001:
+		return Vector2.ZERO
+	var t := Time.get_ticks_msec() * 0.001
+	return Vector2(sin(t * 8.7) * amount, sin(t * 6.9 + 1.3) * amount)
+
+
+## Airframe attitude for rendering, interpolated between physics ticks.
 func body_lean() -> Vector2:
-	return _lean
+	return _lean_prev.lerp(_lean, Engine.get_physics_interpolation_fraction()) + _wobble()
+
+
+## How far the chase camera should pitch with the aircraft: the nose angle in
+## flight-sim mode, nothing in arcade. Interpolated, like body_lean().
+func view_pitch() -> float:
+	if flight_model != FlightModel.SIM:
+		return 0.0
+	return lerpf(_nose_prev, _nose_pitch, Engine.get_physics_interpolation_fraction())
+
+
+func flight_model_name() -> String:
+	return FLIGHT_MODEL_NAMES[flight_model]
+
+
+## Throttle-driven airspeed in flight-sim mode, for the HUD.
+func sim_airspeed() -> float:
+	return _sim_speed
+
+
+func set_flight_model(model: int) -> void:
+	if model == flight_model:
+		return
+	flight_model = model
+	# Hand over without a jolt: the new model starts from what the aircraft is
+	# already doing rather than from rest.
+	var heading := Basis(UP, _current_yaw())
+	_sim_speed = maxf((heading * Vector3.FORWARD).dot(linear_velocity), 0.0)
+	_nose_pitch = 0.0
+	_nose_prev = 0.0
 
 
 func _update_gimbal(delta: float) -> void:
-	var tilt := Input.get_axis("gimbal_up", "gimbal_down")
-	if absf(tilt) > 0.05:
-		gimbal_pitch = clampf(gimbal_pitch - tilt * 55.0 * delta, -90.0, 32.0)
+	if autopilot and autopilot.active:
+		pass                     # the autopilot holds the gimbal on its target
+	elif flight_model == FlightModel.SIM:
+		# The right stick flies the aircraft in this mode, so the payload
+		# simply looks where the nose points, a few degrees down.
+		gimbal_pitch = move_toward(gimbal_pitch, -6.0, 40.0 * delta)
+	else:
+		var tilt := Input.get_axis("gimbal_up", "gimbal_down")
+		if absf(tilt) > 0.05:
+			gimbal_pitch = clampf(gimbal_pitch - tilt * 55.0 * delta, -90.0, 32.0)
 	if Input.is_action_just_pressed("gimbal_center"):
 		gimbal_pitch = 0.0
 
@@ -583,9 +811,35 @@ func _read_discrete_inputs() -> void:
 		Sfx.play("ui_click")
 		Sim.toast.emit("AIR-SAMPLE TRAIL %s" %
 			("ON" if Sim.settings.gas_trail else "OFF"), Sim.Severity.INFO)
-	if Input.is_action_just_pressed("return_home"):
-		Sim.toast.emit("RTL BEARING %03d  %.0f m" %
-			[bearing_to_home(), distance_to_home()], Sim.Severity.CAUTION)
+	if Input.is_action_just_pressed("return_home") and autopilot:
+		if autopilot.mode == Autopilot.Mode.RETURN_HOME:
+			autopilot.cancel("RETURN HOME CANCELLED")
+		else:
+			autopilot.engage_return_home()
+	if Input.is_action_just_pressed("orbit_poi") and autopilot:
+		if autopilot.mode == Autopilot.Mode.ORBIT:
+			autopilot.cancel("ORBIT ENDED")
+		else:
+			_engage_orbit()
+	if Input.is_action_just_pressed("drop_supply") and payload:
+		payload.drop()
+
+
+## Orbit whatever the reticle is on, or failing that the contact the detector
+## is focused on.
+func _engage_orbit() -> void:
+	var camera := get_viewport().get_camera_3d()
+	var target: Node3D = null
+	if camera:
+		target = Detectable.under_reticle(get_tree(), camera.global_position,
+			-camera.global_basis.z)
+	if target == null and detector and is_instance_valid(detector.focused):
+		target = detector.focused
+	if target == null:
+		Sim.toast.emit("ORBIT: PUT THE RETICLE ON A CONTACT FIRST", Sim.Severity.INFO)
+		Sfx.play("ui_click", -8.0)
+		return
+	autopilot.engage_orbit(target)
 
 
 func set_spotlight(on: bool) -> void:
@@ -605,25 +859,39 @@ func reset_to_start() -> void:
 	angular_velocity = Vector3.ZERO
 	_yaw_rate = 0.0
 	_lean = Vector2.ZERO
+	_lean_prev = Vector2.ZERO
+	_sim_speed = 0.0
+	_nose_pitch = 0.0
+	_nose_prev = 0.0
 	_last_velocity = Vector3.ZERO
+	if autopilot:
+		autopilot.cancel("")
+	# Undo a crash: motors back on, gravity off, the tumble locked out again.
+	gravity_scale = 0.0
+	axis_lock_angular_x = true
+	axis_lock_angular_z = true
+	if damage:
+		damage.repair()
+	reset_physics_interpolation()
 	motor_health = PackedFloat32Array([1.0, 1.0, 1.0, 1.0])
 	gimbal_pitch = -12.0
+	if payload:
+		payload.reload()
 	_holding_altitude = false
 	_low_battery_warned = false
-	Sim.toast.emit("AIRFRAME RESET - BACK ON THE VAN", Sim.Severity.INFO)
+	Sim.toast.emit("BACK ON THE VAN  -  AIRFRAME REPAIRED, KITS RELOADED",
+		Sim.Severity.INFO)
 	Sfx.play("ui_switch", -4.0)
 
 
 func _on_body_entered(_body: Node) -> void:
-	var speed := linear_velocity.length()
+	# The speed going *into* the contact. By the time this fires the solver
+	# has already stopped the body, so its current velocity understates the hit.
+	var speed := maxf(_last_velocity.length(), linear_velocity.length())
 	if speed < 0.6:
 		return
 	Sfx.play("impact", clampf(-18.0 + speed * 1.6, -18.0, -2.0),
 		randf_range(0.9, 1.1), 0.15)
 	collided.emit(speed)
-	if speed > 4.5:
-		# a hard strike can cost a motor - recoverable, but it shows up on the HUD
-		var motor := randi() % 4
-		motor_health[motor] = maxf(motor_health[motor] - 0.35, 0.25)
-		Sim.alarm_raised.emit(Sim.Severity.WARNING,
-			"PROP STRIKE - MOTOR %d DEGRADED" % (motor + 1))
+	if damage:
+		damage.impact(speed)
